@@ -1,59 +1,12 @@
 let User = require('../models/User')
-<<<<<<< HEAD
-=======
-const Message = require('../models/Message');
-
-// let {isUserAuthenticated} = require('../utilities/middleware/UserAuth')
->>>>>>> 5a35ef5 (=)
 let express = require('express');
 let router = express.Router();
 let bcrypt = require('bcrypt');
 let dotenv = require('dotenv');
 let jwt = require('jsonwebtoken');
-<<<<<<< HEAD
 // let upload =  require('../utilities/imageUpload');
 let multer = require('multer')
 
-=======
-let multer = require('multer')
-
-
-
-let isUserAuthenticated = async(req,res,next) =>{
-  let {authorization} = req.headers;
-  if(authorization && authorization.startsWith("Bearer")){
-  try{
-  
-     // get token from authorization request headers
-     let token = authorization.split(' ')[1];
-    
-     // get user id (this data was set up on jwt.sign)
-     let {_id} =  jwt.verify(token,process.env.JWT_SECRET)
-     req.user = await User.findById(_id).select('--password');
-      
-     next();
-   } 
-   catch(e){
-      return res.json({message:'You are not authorized to access this resource'})
-   } 
-  }
-   else {
-       return res.json({message:'You are not authorized to access this resource'})
-
-   }
-   
-
-
-
-}
-
-
-
-module.exports = {isUserAuthenticated};
-
-
-console.log(isUserAuthenticated)
->>>>>>> 5a35ef5 (=)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       cb(null, './uploads');
@@ -84,7 +37,6 @@ const storage = multer.diskStorage({
 dotenv.config()
 
 
-<<<<<<< HEAD
 let isUserAuthenticated = async(req,res,next) =>{
     let {authorization} = req.headers;
     if(authorization && authorization.startsWith("Bearer")){
@@ -112,8 +64,6 @@ let isUserAuthenticated = async(req,res,next) =>{
  
  }
 
-=======
->>>>>>> 5a35ef5 (=)
 
 // upload.single('profileAvatar')
 router.post('/create-user',upload.single('profileAvatar'),async(req,res)=>{
@@ -153,13 +103,8 @@ router.post('/login-user',(req,res)=>{
                         {
                          _id:user._id 
                         } ,process.env.JWT_SECRET,{expiresIn:Date.now()+14400000});
-<<<<<<< HEAD
                         let {username,isTeacher,profilePic} = user;
                return  res.json({username,isTeacher,profilePic,token});
-=======
-                        let {username,profileAvatar} = user;
-               return  res.json({username,profileAvatar,token});
->>>>>>> 5a35ef5 (=)
                   
               }
              }
@@ -170,23 +115,15 @@ router.post('/login-user',(req,res)=>{
     })    
 })
 
-<<<<<<< HEAD
 router.get('/students-list',isUserAuthenticated,async(req,res)=>{
    
        let users  = await User.find({}).where('_id').ne(req.user._id);
-=======
-router.get('/users-list',isUserAuthenticated,async(req,res)=>{
-   
-       let users  = await User.find({}).where('_id').ne(req.user?._id);
->>>>>>> 5a35ef5 (=)
        return res.json({message:users});
 
     
   })
 
-<<<<<<< HEAD
 
-=======
   router.get('/find-user/:email',async(req,res)=>{
    let email = req.params.email;
    User.exists({email},(err,doc)=>{
@@ -238,5 +175,4 @@ router.post('/add-message/:senderId/:receiverId',isUserAuthenticated,async(req,r
   }
 
 });
->>>>>>> 5a35ef5 (=)
 module.exports = router;

@@ -15,11 +15,7 @@ app.use(cors());
 // means use the /uploads folder to serve static assets
 app.use('/uploads',express.static(path.join(__dirname,'uploads')));
 app.use(express.json())
-<<<<<<< HEAD
 app.use('/api/chat',routesUser)
-=======
-app.use('/api/chat',routesChat)
->>>>>>> 5a35ef5 (=)
 app.use('/api/user',routesUser)
 app.use('/api/admin',routesAdmin)
 
