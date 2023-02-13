@@ -1,17 +1,32 @@
 import React, {useEffect, useState} from 'react'
 import { useNavigate } from 'react-router'
 import axios from 'axios'
+import {io} from 'socket.io-client'
+
 function Chat() {
+  let [socket,setSocket]  = useState(null)
   let [currentUsers,setCurrentUsers] = useState([]);
   let [directMessages,setDirectMessages] = useState([]);
   let [userToDM,setUserToDM] = useState({});
   let [user,setCurrentUser]  = useState(JSON.parse(localStorage.getItem('user')));
   let config = { headers : {'Authorization' : `Bearer ${JSON.parse(localStorage.getItem('user')).data.token}` }}
   let navigate = useNavigate()
-  
-   useEffect(()=>{
-    //  console.log(user.data.token)
-    let getCurrentUsers = async () => {
+  let [checked,setChecked] = useState(false);
+  let [message,setMessage] = useState('')
+  let [isDirectMessage,setIsDirectMessage] = useState(false);
+  let [messages,setMessages] = useState([]);
+  let [currentUserId,setCurrentUserId] = useState(''); 
+  let [mSender,setMsender]= useState('');
+  let [mReceiver,setMReceiver] = useState('')
+
+  useEffect(() => {
+    setSocket(io("http://localhost:5000"));
+  }, []);
+
+
+  useEffect(()=>{
+ 
+     let getCurrentUsers = async () => {
      let users = await axios.get('/api/user/users-list',config);
      setCurrentUsers(users.data.message)
     }
@@ -20,35 +35,68 @@ function Chat() {
     
     }
      },[user])
-    let [message,setMessage] = useState('')
-    let [isDirectMessage,setIsDirectMessage] = useState(false);
-    let [messages,setMessages] = useState([]);
+   
+     useEffect(()=>{
+      let showMessages = async () => {
+      if(isDirectMessage && userToDM) {
+        let sender = await axios.get('/api/user/get-current-user',config); 
+        setCurrentUserId(sender.data.currentUser._id);
+ 
+      // swap the ids
+      let directChatMessages = await axios.get(`/api/user/direct-messages/${sender.data.currentUser._id}/${userToDM._id}`,config);
+    
+      setMessages(directChatMessages.data.messages)
+      
+     
+    } }
+      showMessages();
+    },[isDirectMessage,messages,userToDM])
+
+    useEffect(()=>{
+ 
+      socket?.on('receive-message',async(message)=>{
+        console.log(message)
+        let sender = await axios.get('/api/user/get-current-user',config); 
+
+        let directChatMessages = await axios.get(`/api/user/direct-messages/${sender.data.currentUser._id}/${userToDM._id}`,config);
+
+        setMessages(directChatMessages.data.messages)
+
+      })
+    },[socket])
         let sendMessage = async(e) => {
+          e.preventDefault();
+ 
+  // console.log("Sender ID " + sender.data.currentUser._id);
+  // console.log("Receiver ID " + userToDM._id);
         let sender = await axios.get('/api/user/get-current-user',config);
-        // senderId
-        console.log(sender.data.currentUser._id);
+       
         if(userToDM && isDirectMessage){
-          console.log(userToDM._id);
+          
+          let messageOptions = {isDirectMessage:true,contents:message,photoPath:''};
+          // making the room for both sender and receiver
+          socket?.emit('send-message',messageOptions);
+
+          
+          setMessages([...messages,messageOptions]);
+
 
           let directMessage = await axios.post(`/api/user/add-message/${sender.data.currentUser._id}/${userToDM._id}`
-          ,{isDirectMessage:true,contents:message,photoPath:''},config);
-          console.log(directMessage)
+          ,messageOptions);
+          
+          setMessage('')
 
+          
         }
         else { 
           // do some conditional so it shows empty screen instead of conversation with x,y,z
         }
-        e.preventDefault();
-        let directChatMessages = await axios.get(`/api/user/direct-messages/${sender.data.currentUser._id}/${userToDM._id}`,config);
-        console.log(directChatMessages)
-        setMessages([...messages,message]);
-        setMessage('')
-        
+         
     }
   return (
-    <div className="flex h-screen antialiased text-gray-800">
+    <div className={`flex h-screen antialiased ${checked ? 'text-gray-light' : 'text-gray-800'} `}>
     <div className="flex flex-row h-full w-full overflow-x-hidden">
-      <div className="flex flex-col py-8 pl-6 pr-2 w-64 bg-white flex-shrink-0">
+      <div className={`flex flex-col py-8 pl-6 pr-4 w-64 ${checked ? 'bg-electro-magnetic' :'bg-white'} flex-shrink-0`}>
         <div className="flex flex-row items-center justify-center h-12 w-full">
           <div
             className="flex items-center justify-center rounded-2xl text-indigo-700 bg-indigo-100 h-10 w-10"
@@ -85,14 +133,14 @@ function Chat() {
           <div className="text-sm font-semibold mt-2">{JSON.parse(localStorage.getItem('user')).data.username}</div>
           <div className="text-xs text-gray-500">Lead UI/UX Designer</div>
      
-          <div className="flex flex-row items-center mt-3">
-            <div
-              className="flex flex-col justify-center h-4 w-8 bg-indigo-500 rounded-full"
-            >
-              <div className="h-3 w-3 bg-white rounded-full self-end mr-1"></div>
-            </div>
-            <div className="leading-none ml-1 text-xs">Active</div>
-          </div>
+          <div className="flex justify-center">
+  <div className="form-check form-switch">
+    <input className="form-check-input appearance-none w-9 -ml-10 rounded-full float-left h-5 align-top bg-white bg-no-repeat bg-contain bg-gray-300 focus:outline-none cursor-pointer shadow-sm" type="checkbox" role="switch" id="flexSwitchCheckChecked" 
+     onClick={()=>setChecked(!checked)}
+    defaultChecked={checked} />
+    <label className="form-check-label inline-block text-gray-800" htmlFor="flexSwitchCheckChecked">Theme</label>
+  </div>
+</div>
           <button  onClick={()=>{navigate('/')}}className="bg-transparent hover:bg-blue-500 mt-2 text-blue-700 font-semibold hover:text-white py-1 px-2 border border-blue-500 hover:border-transparent rounded">
   Logout
   
@@ -118,7 +166,7 @@ function Chat() {
               setIsDirectMessage(true)
             }
             }
-              className="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2"
+              className="flex flex-row items-center hover:bg-orange-300 rounded-xl p-2"
             >
               <div
                 className="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full"
@@ -131,8 +179,7 @@ function Chat() {
               >
                 1
               </div>
-              <div class="flex space-x-2 justify-center">
-  <button type="button" class="inline-block px-3 ml-2 py-2 bg-green-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-red-700 hover:shadow-lg focus:bg-red-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-red-800 active:shadow-lg transition duration-150 ease-in-out">Add to group</button>
+              <div className="flex space-x-2 justify-center">
 </div>
             </button>
             </React.Fragment>
@@ -161,52 +208,61 @@ function Chat() {
           </div>
         </div>
       </div>
-      <div className="flex flex-col flex-auto h-full p-6">
+      <div className="flex flex-col flex-auto h-full p-6" style={{backgroundColor:'#9c88ff'}}>
         <div
-          className="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 h-full p-4"
+          className={`flex flex-col flex-auto flex-shrink-0 rounded-2xl  ${checked ? 'bg-electro-magnetic' :'bg-white'} h-full p-4`}
         >
           <div className="flex flex-col h-full overflow-x-auto mb-4">
             <div className="flex flex-col h-full">
               <div className="grid grid-cols-12 gap-y-2">
                 {messages ?  messages.map( (message) =>  {
                     return( 
-               <React.Fragment>  
-                
+               <React.Fragment key={message._id}>  
+               {
+                        message.messageSender == currentUserId && message.messageReceiver == userToDM._id ?    
              <div className="col-start-1 col-end-8 p-3 rounded-lg">
-           
+               
                   <div className="flex flex-row items-center">
-                  <img src={"https://preview.redd.it/mo7610lfo2b81.jpg?width=400&format=pjpg&auto=webp&s=4f8e94bc02fb628dd5d724f312637503a895921e"} 
+                  <img src={user.data.profileAvatar} 
                    className=' object-cover h-10 w-10 rounded-full'/>
                      
                     <div
-                      className="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl"
+                      className="relative ml-3 text-sm bg-gradient-to-r text-white	 from-indigo-500 via-purple-500 to-pink-500 py-2 px-4 shadow rounded-xl"
                     >
-                      <p className='break-words	w-96	'>{message}</p>
+                      <p className='break-words	w-80	'>{message.contents}</p>
                     </div>
                   </div>
                 </div>
+               :'' }
             
                 <div className="col-start-6 col-end-13 p-3 rounded-lg">
-                  <div className="flex items-center justify-start flex-row-reverse">
-                    <div
-                      className="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0"
-                    >
-                      A
-                    </div>
-                    <div
-                      className="relative mr-3 text-sm bg-indigo-100 py-2 px-4 shadow rounded-xl"
-                    >
-                      <div>
-                        Lorem ipsum dolor sit, amet consectetur adipisicing. ?
-                      </div>
-                      <div
+                  
+                     
+                        {
+                        message.messageReceiver == currentUserId && message.messageSender == userToDM._id ?  
+                         <div className="flex items-center justify-start flex-row-reverse">
+                         <div
+                           className="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0"
+                         >
+                           <img src={userToDM.profileAvatar} 
+                        className=' object-cover h-10 w-10 rounded-full'/>
+                         </div>
+                            <div
+                            className="relative mr-3 text-white text-sm bg-gradient-to-r from-pink-500 to-yellow-500 py-2 px-4 shadow rounded-xl"
+                          >
+                        <div>{message.contents} </div> 
+                        <div
                         className="absolute text-xs bottom-0 right-0 -mb-5 mr-2 text-gray-500"
                       >
                         Seen
                       </div>
                     </div>
-                  </div>
-                </div>
+                    </div>
+
+                        : ''}
+                      
+                     
+                 </div>
                 </React.Fragment>
                 )
                 }):''}
@@ -214,7 +270,7 @@ function Chat() {
             </div>
           </div>
           <div
-            className="flex flex-row items-center h-16 rounded-xl bg-white w-full px-4"
+            className={`flex flex-row items-center h-16 rounded-xl ${checked ? 'bg-dark' : 'bg-white'} w-full px-4`}
           >
             <div>
               <button
