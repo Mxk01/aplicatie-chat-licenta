@@ -4,6 +4,7 @@ let router = express.Router();
 let bcrypt = require('bcrypt');
 let dotenv = require('dotenv');
 let jwt = require('jsonwebtoken');
+let Message = require('../models/Message')
 // let upload =  require('../utilities/imageUpload');
 let multer = require('multer')
 
@@ -103,8 +104,8 @@ router.post('/login-user',(req,res)=>{
                         {
                          _id:user._id 
                         } ,process.env.JWT_SECRET,{expiresIn:Date.now()+14400000});
-                        let {username,isTeacher,profilePic} = user;
-               return  res.json({username,isTeacher,profilePic,token});
+                        let {username,profileAvatar} = user;
+               return  res.json({username,profileAvatar,token});
                   
               }
              }
@@ -115,7 +116,7 @@ router.post('/login-user',(req,res)=>{
     })    
 })
 
-router.get('/students-list',isUserAuthenticated,async(req,res)=>{
+router.get('/users-list',isUserAuthenticated,async(req,res)=>{
    
        let users  = await User.find({}).where('_id').ne(req.user._id);
        return res.json({message:users});
@@ -145,7 +146,15 @@ router.get('/direct-messages/:senderId/:receiverId',isUserAuthenticated,async(re
   try {
   let messageSender = req.params.senderId;
   let messageReceiver = req.params.receiverId;
-   let messages =  await Message.find({messageSender,messageReceiver});
+   let messages =  await Message.find({isDirectMessage:true,
+    // verifica daca una din conditii a fost satisfacuta :
+    $or: [
+      { messageSender: messageReceiver }, 
+      { messageSender }, 
+      { messageReceiver: messageSender },
+      {messageReceiver}]
+    }
+   );
    res.status(200).json({messages});
   }
   catch(e){
@@ -154,7 +163,7 @@ router.get('/direct-messages/:senderId/:receiverId',isUserAuthenticated,async(re
 
   })
 
-router.post('/add-message/:senderId/:receiverId',isUserAuthenticated,async(req,res)=>{
+router.post('/add-message/:senderId/:receiverId',async(req,res)=>{
   try {
     // receives both senderId and receiverId 
   let senderId = req.params.senderId;
@@ -171,7 +180,7 @@ router.post('/add-message/:senderId/:receiverId',isUserAuthenticated,async(req,r
   res.json({message});
   }
   catch(e){
-
+    res.json({error:e.message})
   }
 
 });

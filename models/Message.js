@@ -2,10 +2,7 @@ let mongoose = require('mongoose');
 let Schema = mongoose.Schema;
 
 let messageSchema = new mongoose.Schema({
-    subject : {
-        type:String,
-        required:true
-    },
+
     contents: {
         type:String
     },
