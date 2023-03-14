@@ -1,9 +1,16 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState,useRef} from 'react'
 import { useNavigate } from 'react-router'
 import axios from 'axios'
 import {io} from 'socket.io-client'
+import data from '@emoji-mart/data'
+import Picker from '@emoji-mart/react'
+
 
 function Chat() {
+  const messagesBottom = useRef(null);
+
+  let [currentEmoji,setCurrentEmoji] = useState({})
+  let [emojiSelected,setEmojiSelected] = useState(false)
   let [socket,setSocket]  = useState(null)
   let [currentUsers,setCurrentUsers] = useState([]);
   let [directMessages,setDirectMessages] = useState([]);
@@ -23,6 +30,18 @@ function Chat() {
     setSocket(io("http://localhost:5000"));
   }, []);
 
+   useEffect(()=>{
+    console.log()
+    socket?.emit("utilizator-nou-online",user.data.username)
+   },[socket,user])
+
+   
+ 
+  
+
+  useEffect(() => {
+    messagesBottom.current?.scrollIntoView({behavior: 'smooth'});
+  }, [messages]);
 
   useEffect(()=>{
  
@@ -35,7 +54,7 @@ function Chat() {
     
     }
      },[user])
-   
+  
      useEffect(()=>{
       let showMessages = async () => {
       if(isDirectMessage && userToDM) {
@@ -50,19 +69,20 @@ function Chat() {
      
     } }
       showMessages();
-    },[isDirectMessage,messages,userToDM])
+    },[messages,userToDM])
 
     useEffect(()=>{
- 
-      socket?.on('receive-message',async(message)=>{
-        console.log(message)
-        let sender = await axios.get('/api/user/get-current-user',config); 
-
-        let directChatMessages = await axios.get(`/api/user/direct-messages/${sender.data.currentUser._id}/${userToDM._id}`,config);
-
-        setMessages(directChatMessages.data.messages)
-
+    //   socket?.on("obtineNotificare",(({receiverName,mesaj})=> { 
+    //     alert(mesaj); 
+    //  }))
+  
+       // socket este nullabil pentru ca initial este setat in state ca null ,daca exista socket evenimentul poate fi emis
+      socket?.on('receive-message',async({message})=>{
+        if(message.contents && message.receiverId == userToDM._id){
+        setMessages([...messages,message.contents]);
+        }
       })
+      
     },[socket])
         let sendMessage = async(e) => {
           e.preventDefault();
@@ -75,10 +95,14 @@ function Chat() {
           
           let messageOptions = {isDirectMessage:true,contents:message,photoPath:''};
           // making the room for both sender and receiver
-          socket?.emit('send-message',messageOptions);
+          socket?.emit('send-message',{
+            message : {...messageOptions},  
+            senderName : user.username, 
+            receiverName: userToDM.username
+          });
 
           
-          setMessages([...messages,messageOptions]);
+        
 
 
           let directMessage = await axios.post(`/api/user/add-message/${sender.data.currentUser._id}/${userToDM._id}`
@@ -96,6 +120,17 @@ function Chat() {
   return (
     <div className={`flex h-screen antialiased ${checked ? 'text-gray-light' : 'text-gray-800'} `}>
     <div className="flex flex-row h-full w-full overflow-x-hidden">
+      {/* <button onClick = { () => {
+        console.log(`Sender name : ${user.data.username}`)
+        console.log(`Receiver name : ${userToDM.username}`)
+
+        //  vom cauta receiver-ul  folosind numele cu functia getUser si vom emite un eveniment catre acesta
+        socket?.emit("trimiteNotificare",{
+          senderName : user.username, 
+          receiverName: userToDM.username, // OK 
+          mesaj:"Test123232"
+        })
+      }}>Testing notifs</button> */}
       <div className={`flex flex-col py-8 pl-6 pr-4 w-64 ${checked ? 'bg-electro-magnetic' :'bg-white'} flex-shrink-0`}>
         <div className="flex flex-row items-center justify-center h-12 w-full">
           <div
@@ -177,7 +212,7 @@ function Chat() {
               <div
                 className="flex items-center justify-center ml-auto text-xs text-white bg-red-500 h-4 w-4 rounded leading-none"
               >
-                1
+                {/* { newMessageReceivedNotif &&  } */}
               </div>
               <div className="flex space-x-2 justify-center">
 </div>
@@ -213,6 +248,7 @@ function Chat() {
           className={`flex flex-col flex-auto flex-shrink-0 rounded-2xl  ${checked ? 'bg-electro-magnetic' :'bg-white'} h-full p-4`}
         >
           <div className="flex flex-col h-full overflow-x-auto mb-4">
+
             <div className="flex flex-col h-full">
               <div className="grid grid-cols-12 gap-y-2">
                 {messages ?  messages.map( (message) =>  {
@@ -263,19 +299,28 @@ function Chat() {
                       
                      
                  </div>
+                 <div ref={messagesBottom} />
+
                 </React.Fragment>
+                
                 )
                 }):''}
+                            
+                    { emojiSelected &&  <Picker data={data} onEmojiSelect={console.log} style={{zIndex:100,position:'fixed'}}/> }
+
               </div>
             </div>
           </div>
+
           <div
             className={`flex flex-row items-center h-16 rounded-xl ${checked ? 'bg-dark' : 'bg-white'} w-full px-4`}
           >
             <div>
+
               <button
                 className="flex items-center justify-center text-gray-400 hover:text-gray-600"
               >
+
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -301,6 +346,8 @@ function Chat() {
                   className="flex w-full border rounded-xl focus:outline-none focus:border-indigo-300 pl-4 h-10"
                 />
                 <button
+                                onClick={()=>setEmojiSelected(!emojiSelected)}
+
                   className="absolute flex items-center justify-center h-full w-12 right-0 top-0 text-gray-400 hover:text-gray-600"
                 >
                   <svg
@@ -318,6 +365,7 @@ function Chat() {
                     ></path>
                   </svg>
                 </button>
+                
               </div>
             </div>
             <div className="ml-4">
