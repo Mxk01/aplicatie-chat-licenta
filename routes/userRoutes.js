@@ -184,4 +184,9 @@ router.post('/add-message/:senderId/:receiverId',async(req,res)=>{
   }
 
 });
+
+router.delete('/delete-messages',async(req,res)=>{
+  await  Message.deleteMany();
+})
+
 module.exports = router;

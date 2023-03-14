@@ -30,14 +30,55 @@ app.use('/api/chat',routesChat)
 app.use('/api/user',routesUser)
 app.use('/api/admin',routesAdmin)
 
+// Array-ul utilizatoriOnline va avea urmatoarea structura 
+//  [  { username : 'addasasd' , socketId : 'asdaq21e21wdqad' } , {username:'asdsad',socketId:'aw322r'}]
+let utilizatoriOnline = [];
+
+const adaugaUtilizator = (username,sId) => {
+ // sId inseamna socketId
+ // daca nu este niciun utilizator cu acest username  atunci executa cea de-a doua expresie
+ !utilizatoriOnline.some(uOn => uOn.username === username ) && utilizatoriOnline.push({username,sId})
+}
+const stergeUtilizator = (sId) => {
+   utilizatoriOnline =   utilizatoriOnline.filter(u => u.sId !== sId)
+}
+const  getUtilizatorOnline = (username) => {
+      return utilizatoriOnline.find(user => user.username == username);
+}
+
 io.on('connection',(socket)=>{
-    let id = socket.id;
-   console.log('User connected')
-   socket.on('send-message',(message)=>{
-    
-    // emitting a private message
-    io.to(id).emit('receive-message',message)
-      
+
+    socket.on('utilizator-nou-online',(username)=>{
+       adaugaUtilizator(username,socket.id);
+    })
+    // DECI INAINTE DE A TRIMITE NOTIFICAREA AMBII USERI TRB SA FIE ONLINE
+    socket.on("trimiteNotificare",({ senderName,receiverName,mesaj })=>{
+        console.log(`Sender name ${senderName}, Receiver name ${receiverName}`)
+        let userReceiverID = getUtilizatorOnline(receiverName);
+        console.log(`Detalii user receiver : ${userReceiverID} `)
+         if(userReceiverID) {
+                    // obtine id-ul persoanei careia vrem sa ii trimitem notificarea 
+
+            let {sId} = userReceiverID;
+         
+        io.to(sId).emit("obtineNotificare",{receiverName,mesaj})
+        }
+        else {
+          console.log('Acest utilizator nu este online!')  
+          return; 
+        }
+    })
+
+    console.log('User connected')
+   socket.on('send-message',({message,senderName,receiverName})=>{
+    let userReceiverID = getUtilizatorOnline(receiverName);
+    if(userReceiverID!=undefined) {
+    let {sId} = userReceiverID;
+    io.to(sId).emit('receive-message',message)
+    }
+   })
+   socket.on('disconnect',()=>{
+    stergeUtilizator(socket.id);
    })
 })
 
