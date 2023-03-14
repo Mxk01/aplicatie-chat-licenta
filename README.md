@@ -15,4 +15,4 @@ Install Postman for testing the APIs  and  use mongodb Atlas to check the db col
 
 ![1](https://user-images.githubusercontent.com/61979889/203420543-193cd6af-0863-4d63-9dba-141332ba9329.PNG)
 ![2](https://user-images.githubusercontent.com/61979889/203420555-63b9e76a-c474-4eaa-906e-a5ba04828d74.PNG)
-![3](https://user-images.githubusercontent.com/61979889/203420568-bdf1fd8b-7da7-4b40-baa3-86063c0b912d.PNG)
+![GitChatPhoto](https://user-images.githubusercontent.com/61979889/218548563-140df7cc-02e8-4d1a-8959-c5b8fb0a3a89.png)
