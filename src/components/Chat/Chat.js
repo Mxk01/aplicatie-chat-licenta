@@ -25,14 +25,19 @@ function Chat() {
   let [currentUserId,setCurrentUserId] = useState(''); 
   let [mSender,setMsender]= useState('');
   let [mReceiver,setMReceiver] = useState('')
-
+  let [isTyping ,setIsTyping ] = useState(false)
+  let [connectedUsers,setConnectedUsers] = useState([]);
+  // let [connectedUser,setConnectedUser] = useState({username:'Test',isConnected:false})
+  // mesaj - Gogu is typing ... 
+  let [isTypingMessage,setIsTypingMessage]  = useState('')
   useEffect(() => {
     setSocket(io("http://localhost:5000"));
   }, []);
 
    useEffect(()=>{
-    console.log()
+
     socket?.emit("utilizator-nou-online",user.data.username)
+  
    },[socket,user])
 
    
@@ -53,6 +58,8 @@ function Chat() {
     getCurrentUsers();
     
     }
+  
+    
      },[user])
   
      useEffect(()=>{
@@ -71,10 +78,12 @@ function Chat() {
       showMessages();
     },[messages,userToDM])
 
+    
+
     useEffect(()=>{
-    //   socket?.on("obtineNotificare",(({receiverName,mesaj})=> { 
-    //     alert(mesaj); 
-    //  }))
+      socket?.on('utilizator-online',({username,isConnected,utilizatoriOnline})=>{
+        setConnectedUsers([{username,isConnected:true},...connectedUsers]);
+       })
   
        // socket este nullabil pentru ca initial este setat in state ca null ,daca exista socket evenimentul poate fi emis
       socket?.on('receive-message',async({message})=>{
@@ -84,6 +93,17 @@ function Chat() {
       })
       
     },[socket])
+
+    let adauga_emoji = (emoji_selectat)=>{
+      // emoji in unicode ex. 1f923
+      const emoji_codat = emoji_selectat.unified.split("_")
+      const elemente_emoji_codat =  [];
+      // ex.  0x1f923
+      emoji_codat.forEach(element_emoji =>  elemente_emoji_codat.push("0x"+element_emoji));
+      let emoji_final = String.fromCodePoint(...elemente_emoji_codat);
+      setMessage(message+emoji_final)
+
+    }
         let sendMessage = async(e) => {
           e.preventDefault();
  
@@ -203,16 +223,31 @@ function Chat() {
             }
               className="flex flex-row items-center hover:bg-orange-300 rounded-xl p-2"
             >
-              <div
-                className="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full"
-                style={{background:`url(${user.profileAvatar})`,backgroundSize:'cover'}}
-              >
-               </div>
+           
+               <div class="relative">
+    <img class="w-10 h-10 rounded-full object-cover" src={`${user.profileAvatar}`} alt=""/>
+   
+   {/* { 
+    
+
+   connectedUser.isConnected && connectedUser.username == user.username ? <span class="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s		 rounded-full"></span>
+         : <span class="top-7 left-7 absolute  w-3 h-3 bg-red-400 border-4s		 rounded-full"></span>   } */}
+
+{ 
+    
+    connectedUsers.length > 0 && connectedUsers.map( cUser =>(
+      
+      cUser.isConnected &&  cUser.username == user.username  ? (<span class="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s		 rounded-full"></span>
+       ) : 
+       (<span class="top-7 left-7 absolute  w-3 h-3 bg-red-400 border-4s		 rounded-full"></span> )
+    )
+          )
+      }
+</div>
               <div className="ml-2 text-sm font-semibold">{user.username}</div>
               <div
                 className="flex items-center justify-center ml-auto text-xs text-white bg-red-500 h-4 w-4 rounded leading-none"
               >
-                {/* { newMessageReceivedNotif &&  } */}
               </div>
               <div className="flex space-x-2 justify-center">
 </div>
@@ -245,6 +280,7 @@ function Chat() {
       </div>
       <div className="flex flex-col flex-auto h-full p-6" style={{backgroundColor:'#9c88ff'}}>
         <div
+        onClick={()=>setEmojiSelected(!emojiSelected)}
           className={`flex flex-col flex-auto flex-shrink-0 rounded-2xl  ${checked ? 'bg-electro-magnetic' :'bg-white'} h-full p-4`}
         >
           <div className="flex flex-col h-full overflow-x-auto mb-4">
@@ -254,7 +290,7 @@ function Chat() {
                 {messages ?  messages.map( (message) =>  {
                     return( 
                <React.Fragment key={message._id}>  
-               {
+               { 
                         message.messageSender == currentUserId && message.messageReceiver == userToDM._id ?    
              <div className="col-start-1 col-end-8 p-3 rounded-lg">
                
@@ -305,9 +341,32 @@ function Chat() {
                 
                 )
                 }):''}
-                            
-                    { emojiSelected &&  <Picker data={data} onEmojiSelect={console.log} style={{zIndex:100,position:'fixed'}}/> }
 
+             
+                            
+                    { emojiSelected &&  <Picker data={data} onEmojiSelect={adauga_emoji} style={{zIndex:100,position:'fixed'}}/> }
+
+                    {/* {isTyping ?  (<div className="col-start-6 col-end-13 p-3 rounded-lg">
+                  
+                  <div className="flex items-center justify-start flex-row-reverse">
+                <div
+                  className="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0"
+                >
+                  <img src={userToDM.profileAvatar} 
+               className=' object-cover h-10 w-10 rounded-full'/>
+                </div>
+                   <div
+                   className="relative mr-3 text-white text-sm bg-gradient-to-r from-pink-500 to-yellow-500 py-2 px-4 shadow rounded-xl"
+                 >
+               <div>{isTypingMessage} </div> 
+               <div
+               className="absolute text-xs bottom-0 right-0 -mb-5 mr-2 text-gray-500"
+             >
+               
+             </div>
+           </div>
+           </div>
+           </div>): ''} */}
               </div>
             </div>
           </div>
@@ -342,6 +401,9 @@ function Chat() {
                 <input
                   type="text"
                   value={message}
+                  onInput = { (e) => { 
+                    socket.emit('isTyping',{ user : user.username,message:` is typing ...  `})
+                  }}
                   onChange={(e)=>setMessage(e.target.value)}
                   className="flex w-full border rounded-xl focus:outline-none focus:border-indigo-300 pl-4 h-10"
                 />
