@@ -50,6 +50,9 @@ io.on('connection',(socket)=>{
 
     socket.on('utilizator-nou-online',(username)=>{
        adaugaUtilizator(username,socket.id);
+       if(utilizatoriOnline.length > 0) { 
+       io.emit('utilizator-online',{username,isConnected:true,utilizatoriOnline})
+       }
     })
     // DECI INAINTE DE A TRIMITE NOTIFICAREA AMBII USERI TRB SA FIE ONLINE
     socket.on("trimiteNotificare",({ senderName,receiverName,mesaj })=>{
@@ -70,6 +73,15 @@ io.on('connection',(socket)=>{
     })
 
     console.log('User connected')
+    // socket.on('isTyping',({username,message})=>{
+    //     let userReceiverID = getUtilizatorOnline(username);
+    //     if(userReceiverID!=undefined) {
+    //     let {sId} = userReceiverID;
+    //     io.to(sId).emit("is-currently-typing",`${username} ${message} `)
+    //     }
+    //  })
+
+
    socket.on('send-message',({message,senderName,receiverName})=>{
     let userReceiverID = getUtilizatorOnline(receiverName);
     if(userReceiverID!=undefined) {
