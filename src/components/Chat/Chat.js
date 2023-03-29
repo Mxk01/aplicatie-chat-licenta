@@ -8,8 +8,9 @@ import Picker from '@emoji-mart/react'
 
 function Chat() {
   const messagesBottom = useRef(null);
-
+  let [groupName,setGroupName] = useState('');
   let [currentEmoji,setCurrentEmoji] = useState({})
+  let [notificationCount,setNotificationCount] = useState(0);
   let [emojiSelected,setEmojiSelected] = useState(false)
   let [socket,setSocket]  = useState(null)
   let [currentUsers,setCurrentUsers] = useState([]);
@@ -18,9 +19,13 @@ function Chat() {
   let [user,setCurrentUser]  = useState(JSON.parse(localStorage.getItem('user')));
   let config = { headers : {'Authorization' : `Bearer ${JSON.parse(localStorage.getItem('user')).data.token}` }}
   let navigate = useNavigate()
+  let [groupForm,setGroupForm] = useState(false);
   let [checked,setChecked] = useState(false);
   let [message,setMessage] = useState('')
+  let [groupMembers,setGroupMembers] = useState([])
+  let [dropDownVisible,setDropDownVisible] = useState(false);
   let [isDirectMessage,setIsDirectMessage] = useState(false);
+  let [isGroupMessage,setIsGroupMessage] = useState(false);
   let [messages,setMessages] = useState([]);
   let [currentUserId,setCurrentUserId] = useState(''); 
   let [mSender,setMsender]= useState('');
@@ -81,19 +86,39 @@ function Chat() {
     
 
     useEffect(()=>{
-      socket?.on('utilizator-online',({username,isConnected,utilizatoriOnline})=>{
-        setConnectedUsers([{username,isConnected:true},...connectedUsers]);
-       })
-  
+      
        // socket este nullabil pentru ca initial este setat in state ca null ,daca exista socket evenimentul poate fi emis
       socket?.on('receive-message',async({message})=>{
         if(message.contents && message.receiverId == userToDM._id){
         setMessages([...messages,message.contents]);
-        }
+       setNotificationCount(nCount => nCount+1) }
+           
+        
       })
       
     },[socket])
 
+    useEffect(()=>{
+      socket?.on('utilizator-online',(utilizatoriOnline)=>{
+          // filtreaza lista de utilizatori sa apara utilizatorii mai putin  utilizatorul curent 
+
+        setConnectedUsers(utilizatoriOnline.filter(u=> u.username != user.data.username));
+        })
+
+    },[socket])
+     let createGroup = async(groupName) => {
+    
+        // converting group members into an object 
+      
+            
+           let result =  await axios.post('/api/user/create-chat-group',{groupName,groupMembers})
+           console.log(result);
+          
+       
+       // check for status 200 , if everything is ok ,update UI (make new item for group on Groups section)
+       // send to server groupName and groupMembers array 
+       socket.emit('creeaza-room',{groupName,groupMembers})
+     }
     let adauga_emoji = (emoji_selectat)=>{
       // emoji in unicode ex. 1f923
       const emoji_codat = emoji_selectat.unified.split("_")
@@ -111,7 +136,7 @@ function Chat() {
   // console.log("Receiver ID " + userToDM._id);
         let sender = await axios.get('/api/user/get-current-user',config);
        
-        if(userToDM && isDirectMessage){
+        if(userToDM && isDirectMessage && message!=''){
           
           let messageOptions = {isDirectMessage:true,contents:message,photoPath:''};
           // making the room for both sender and receiver
@@ -135,10 +160,74 @@ function Chat() {
         else { 
           // do some conditional so it shows empty screen instead of conversation with x,y,z
         }
+
+      
          
     }
   return (
     <div className={`flex h-screen antialiased ${checked ? 'text-gray-light' : 'text-gray-800'} `}>
+
+<div id="authentication-modal" tabIndex="-1" aria-hidden="true" className={`fixed top-0 left-0 right-100  	 z-50 ${groupForm ? '':'hidden'} w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] md:h-full`}>
+    <div className="relative w-full h-full max-w-md md:h-auto">
+        <div className="relative bg-white rounded-lg shadow dark:bg-gray-800">
+            <button type="button"
+            onClick={()=> setGroupForm(!groupForm)
+              } className="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-800 dark:hover:text-white" data-modal-hide="authentication-modal">
+                <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path></svg>
+                <span className="sr-only">Close modal</span>
+            </button>
+            <div className="px-6 py-6 lg:px-8  self-center		">
+                {/* <h3 className="mb-4 text-xl font-medium text-gray-900 dark:text-white">Sign in to our platform</h3> */}
+                <form className="space-y-6" action="#">
+                    <div>
+                        <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nume Grup</label>
+                        <input type="text" name="email" id="email" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" placeholder="Nume Grup " required
+                        onChange={(e)=>{
+                          setGroupName(e.target.value)}}/>
+                    </div>
+                    <button id="dropdownDefaultButton"
+                    onClick={()=>setDropDownVisible(!dropDownVisible)} data-dropdown-toggle="dropdown" className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" type="button">Available <svg className="w-4 h-4 ml-2" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></button>
+<div id="dropdown" className={`z-10 ${dropDownVisible ? '' :'hidden'}   bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700`}>
+    <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+       
+     { currentUsers && currentUsers.map(c =>  (
+    <div className='pb-2 pl-2' key={c.username}>
+           
+
+    <div id="tooltip-jese" role="tooltip" className="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+    {c.username}
+        <div className="tooltip-arrow" data-popper-arrow>         </div>
+     </div>
+     <div className='flex justify-center align-center'>  
+    <img data-tooltip-target="tooltip-jese" className="w-10 mr-2 h-10 rounded object-cover" src={c.profileAvatar} alt="Medium avatar"/>
+    <button type="button" className="text-white ml-6 bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-900 font-medium rounded-full text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:focus:ring-blue-600"
+    onClick={()=>{ 
+      // update group members array
+      setGroupMembers([...new Set([...groupMembers,{userIdDB:c._id,userNameSocket:c.username}])])
+
+      console.log(c._id)
+      
+    }}>Add</button>
+    </div>
+  </div>
+      
+    ))}
+    </ul>
+</div>
+                    
+                    <button type="submit" className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                    onClick={(e)=>{
+                     e.preventDefault()
+                      //  numeleGrupului , id-ul utilizatorului din baza de date (pt adaugare in BD), username-ul utilizatorului 
+      // de la sockets
+      createGroup(groupName,)
+                    }}>Save</button>
+               
+                </form>
+            </div>
+        </div>
+    </div>
+</div> 
     <div className="flex flex-row h-full w-full overflow-x-hidden">
       {/* <button onClick = { () => {
         console.log(`Sender name : ${user.data.username}`)
@@ -201,8 +290,11 @@ function Chat() {
   
 </button>
         </div>
-
+   
         <div className="flex flex-col mt-8">
+        <button type="button" className="text-white bg-gradient-to-br from-pink-500 to-orange-400 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2"
+        onClick={(e)=>setGroupForm(!groupForm)}> Create Group </button>
+
           <div className="flex flex-row items-center justify-between text-xs">
             <span className="font-bold">Active Conversations</span>
           
@@ -224,22 +316,25 @@ function Chat() {
               className="flex flex-row items-center hover:bg-orange-300 rounded-xl p-2"
             >
            
-               <div class="relative">
-    <img class="w-10 h-10 rounded-full object-cover" src={`${user.profileAvatar}`} alt=""/>
+               <div className="relative">
+    <img className="w-10 h-10 rounded-full object-cover" src={`${user.profileAvatar}`} alt=""/>
    
    {/* { 
     
 
-   connectedUser.isConnected && connectedUser.username == user.username ? <span class="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s		 rounded-full"></span>
-         : <span class="top-7 left-7 absolute  w-3 h-3 bg-red-400 border-4s		 rounded-full"></span>   } */}
+   connectedUser.isConnected && connectedUser.username == user.username ? <span className="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s		 rounded-full"></span>
+         : <span className="top-7 left-7 absolute  w-3 h-3 bg-red-400 border-4s		 rounded-full"></span>   } */}
 
 { 
     
     connectedUsers.length > 0 && connectedUsers.map( cUser =>(
       
-      cUser.isConnected &&  cUser.username == user.username  ? (<span class="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s		 rounded-full"></span>
+      cUser.isConnected &&  cUser.username == user.username 
+        ? (<span className="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s		 rounded-full"></span>
+        
+        
        ) : 
-       (<span class="top-7 left-7 absolute  w-3 h-3 bg-red-400 border-4s		 rounded-full"></span> )
+       (<span className="top-7 left-7 absolute  w-3 h-3 bg-red-400 border-4s		 rounded-full"></span> )
     )
           )
       }
@@ -248,6 +343,7 @@ function Chat() {
               <div
                 className="flex items-center justify-center ml-auto text-xs text-white bg-red-500 h-4 w-4 rounded leading-none"
               >
+                {notificationCount}
               </div>
               <div className="flex space-x-2 justify-center">
 </div>
@@ -258,7 +354,7 @@ function Chat() {
        
           </div>
           <div className="flex flex-row items-center justify-between text-xs mt-6">
-            <span className="font-bold">Archived</span>
+            <span className="font-bold">Groups</span>
             <span
               className="flex items-center justify-center bg-gray-300 h-4 w-4 rounded-full"
               >7</span
@@ -271,16 +367,17 @@ function Chat() {
               <div
                 className="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full"
               >
-                H
+                F
               </div>
-              <div className="ml-2 text-sm font-semibold">Henry Boyd</div>
+              <div className="ml-2 text-sm font-semibold">Fake Group</div>
             </button>
           </div>
         </div>
       </div>
-      <div className="flex flex-col flex-auto h-full p-6" style={{backgroundColor:'#9c88ff'}}>
+      { userToDM ?  (
+      <div className="flex flex-col flex-auto h-full p-6 scroll-smooth" style={{backgroundColor:'#9c88ff'}}>
         <div
-        onClick={()=>setEmojiSelected(!emojiSelected)}
+        // onClick={()=>setEmojiSelected(!emojiSelected)}
           className={`flex flex-col flex-auto flex-shrink-0 rounded-2xl  ${checked ? 'bg-electro-magnetic' :'bg-white'} h-full p-4`}
         >
           <div className="flex flex-col h-full overflow-x-auto mb-4">
@@ -404,6 +501,8 @@ function Chat() {
                   onInput = { (e) => { 
                     socket.emit('isTyping',{ user : user.username,message:` is typing ...  `})
                   }}
+                          onClick={()=>setEmojiSelected(!emojiSelected)}
+
                   onChange={(e)=>setMessage(e.target.value)}
                   className="flex w-full border rounded-xl focus:outline-none focus:border-indigo-300 pl-4 h-10"
                 />
@@ -455,7 +554,7 @@ function Chat() {
             </div>
           </div>
         </div>
-      </div>
+      </div>):''}
     </div>
   </div>
   )
