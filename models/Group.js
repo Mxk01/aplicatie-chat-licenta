@@ -6,14 +6,14 @@ let groupSchema = new mongoose.Schema({
         type:String,
         required:true
     },
+    // get member messages from groupMembers
     groupMembers: {
         type:[mongoose.Schema.Types.ObjectId],
         ref:'User'
     },
-    isGroupAdmin: {type:Boolean}, 
-    groupMessages: {
-        type:[mongoose.Schema.Types.ObjectId],
-        ref:'Message'
+    groupAdmin: {
+        type:Schema.Types.ObjectId,
+        ref:'User'
     }
 })
 module.exports = mongoose.model('Group',groupSchema)

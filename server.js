@@ -37,10 +37,13 @@ let utilizatoriOnline = [];
 const adaugaUtilizator = (username,sId) => {
  // sId inseamna socketId
  // daca nu este niciun utilizator cu acest username  atunci executa cea de-a doua expresie
- !utilizatoriOnline.some(uOn => uOn.username === username ) && utilizatoriOnline.push({username,sId})
+ !utilizatoriOnline.some(uOn => uOn.username === username ) && utilizatoriOnline.push({username,sId,isConnected:true})
 }
 const stergeUtilizator = (sId) => {
-   utilizatoriOnline =   utilizatoriOnline.filter(u => u.sId !== sId)
+   // deconecteaza utilizator
+   console.log(utilizatoriOnline.filter(u=>u.sId == sId));
+//    utilizatoriOnline.filter(u=>u.sId == sId)[0].isConnected = false
+console.log(utilizatoriOnline)
 }
 const  getUtilizatorOnline = (username) => {
       return utilizatoriOnline.find(user => user.username == username);
@@ -49,10 +52,16 @@ const  getUtilizatorOnline = (username) => {
 io.on('connection',(socket)=>{
 
     socket.on('utilizator-nou-online',(username)=>{
+    
        adaugaUtilizator(username,socket.id);
+       console.log(utilizatoriOnline);
        if(utilizatoriOnline.length > 0) { 
-       io.emit('utilizator-online',{username,isConnected:true,utilizatoriOnline})
+       io.emit('utilizator-online',utilizatoriOnline)
        }
+    })
+
+    socket.on('creeaza-room',({groupName,groupMembers})=> {
+      console.log(groupName,groupMembers)
     })
     // DECI INAINTE DE A TRIMITE NOTIFICAREA AMBII USERI TRB SA FIE ONLINE
     socket.on("trimiteNotificare",({ senderName,receiverName,mesaj })=>{
@@ -71,7 +80,7 @@ io.on('connection',(socket)=>{
           return; 
         }
     })
-
+   
     console.log('User connected')
     // socket.on('isTyping',({username,message})=>{
     //     let userReceiverID = getUtilizatorOnline(username);
@@ -90,6 +99,7 @@ io.on('connection',(socket)=>{
     }
    })
    socket.on('disconnect',()=>{
+    console.log("X a iesit!")
     stergeUtilizator(socket.id);
    })
 })
