@@ -132,7 +132,7 @@ router.get('/users-list',isUserAuthenticated,async(req,res)=>{
         res.status(409).json({message:'Username already exists!'})
     }
     else {
-        res.status(401).json({message:'No such user'})
+        res.status(404).json({message:'No such user'})
     }
    }) 
   })

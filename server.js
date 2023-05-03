@@ -41,9 +41,9 @@ const adaugaUtilizator = (username,sId) => {
 }
 const stergeUtilizator = (sId) => {
    // deconecteaza utilizator
-   console.log(utilizatoriOnline.filter(u=>u.sId == sId));
+  //  console.log('dasadsd'+utilizatoriOnline.filter(u=>u.sId == sId).map((u)=>u.username));
 //    utilizatoriOnline.filter(u=>u.sId == sId)[0].isConnected = false
-console.log(utilizatoriOnline)
+// console.log(`Lista util curenti ${utilizatoriOnline[0]}`)
 }
 const  getUtilizatorOnline = (username) => {
       return utilizatoriOnline.find(user => user.username == username);
@@ -54,7 +54,7 @@ io.on('connection',(socket)=>{
     socket.on('utilizator-nou-online',(username)=>{
     
        adaugaUtilizator(username,socket.id);
-       console.log(utilizatoriOnline);
+      //  console.log(utilizatoriOnline);
        if(utilizatoriOnline.length > 0) { 
        io.emit('utilizator-online',utilizatoriOnline)
        }
@@ -63,14 +63,12 @@ io.on('connection',(socket)=>{
     socket.on('creeaza-room',({groupName,groupMembers})=> {
       console.log(groupName,groupMembers)
     })
-    // DECI INAINTE DE A TRIMITE NOTIFICAREA AMBII USERI TRB SA FIE ONLINE
     socket.on("trimiteNotificare",({ senderName,receiverName,mesaj })=>{
-        console.log(`Sender name ${senderName}, Receiver name ${receiverName}`)
+        // console.log(`Sender name ${senderName}, Receiver name ${receiverName}`)
         let userReceiverID = getUtilizatorOnline(receiverName);
-        console.log(`Detalii user receiver : ${userReceiverID} `)
+        // console.log(`Detalii user receiver : ${userReceiverID} `)
          if(userReceiverID) {
-                    // obtine id-ul persoanei careia vrem sa ii trimitem notificarea 
-
+            // obtine id-ul persoanei careia vrem sa ii trimitem notificarea 
             let {sId} = userReceiverID;
          
         io.to(sId).emit("obtineNotificare",{receiverName,mesaj})
@@ -81,14 +79,6 @@ io.on('connection',(socket)=>{
         }
     })
    
-    console.log('User connected')
-    // socket.on('isTyping',({username,message})=>{
-    //     let userReceiverID = getUtilizatorOnline(username);
-    //     if(userReceiverID!=undefined) {
-    //     let {sId} = userReceiverID;
-    //     io.to(sId).emit("is-currently-typing",`${username} ${message} `)
-    //     }
-    //  })
 
 
    socket.on('send-message',({message,senderName,receiverName})=>{
@@ -99,7 +89,6 @@ io.on('connection',(socket)=>{
     }
    })
    socket.on('disconnect',()=>{
-    console.log("X a iesit!")
     stergeUtilizator(socket.id);
    })
 })
