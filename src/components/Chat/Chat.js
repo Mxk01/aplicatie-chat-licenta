@@ -4,7 +4,8 @@ import axios from 'axios'
 import {io} from 'socket.io-client'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
-
+import { FaVideo} from "react-icons/fa";
+import Groups from '../Groups/Groups'
 
 function Chat() {
   const messagesBottom = useRef(null);
@@ -12,6 +13,7 @@ function Chat() {
   let [currentEmoji,setCurrentEmoji] = useState({})
   let [notificationCount,setNotificationCount] = useState(0);
   let [emojiSelected,setEmojiSelected] = useState(false)
+  let [isOnline,setIsOnline] = useState(false)
   let [socket,setSocket]  = useState(null)
   let [currentUsers,setCurrentUsers] = useState([]);
   let [directMessages,setDirectMessages] = useState([]);
@@ -49,9 +51,7 @@ function Chat() {
  
   
 
-  useEffect(() => {
-    messagesBottom.current?.scrollIntoView({behavior: 'smooth'});
-  }, [messages]);
+  
 
   useEffect(()=>{
  
@@ -63,9 +63,7 @@ function Chat() {
     getCurrentUsers();
     
     }
-  
-    
-     },[user])
+    },[])
   
      useEffect(()=>{
       let showMessages = async () => {
@@ -81,13 +79,20 @@ function Chat() {
      
     } }
       showMessages();
+      messagesBottom.current?.scrollIntoView({behavior: 'smooth'});
     },[messages,userToDM])
 
-    
+  
 
     useEffect(()=>{
-      
-       // socket este nullabil pentru ca initial este setat in state ca null ,daca exista socket evenimentul poate fi emis
+      socket?.on('utilizator-online',(utilizatoriOnline)=>{
+          // filtreaza lista de utilizatori sa apara utilizatorii mai putin  utilizatorul curent 
+          setIsOnline(true)
+        setConnectedUsers(utilizatoriOnline.filter(u=> u.username != user.data.username));
+        })
+
+
+           // socket este nullabil pentru ca initial este setat in state ca null ,daca exista socket evenimentul poate fi emis
       socket?.on('receive-message',async({message})=>{
         if(message.contents && message.receiverId == userToDM._id){
         setMessages([...messages,message.contents]);
@@ -95,16 +100,6 @@ function Chat() {
            
         
       })
-      
-    },[socket])
-
-    useEffect(()=>{
-      socket?.on('utilizator-online',(utilizatoriOnline)=>{
-          // filtreaza lista de utilizatori sa apara utilizatorii mai putin  utilizatorul curent 
-
-        setConnectedUsers(utilizatoriOnline.filter(u=> u.username != user.data.username));
-        })
-
     },[socket])
      let createGroup = async(groupName) => {
     
@@ -146,10 +141,6 @@ function Chat() {
             receiverName: userToDM.username
           });
 
-          
-        
-
-
           let directMessage = await axios.post(`/api/user/add-message/${sender.data.currentUser._id}/${userToDM._id}`
           ,messageOptions);
           
@@ -157,12 +148,6 @@ function Chat() {
 
           
         }
-        else { 
-          // do some conditional so it shows empty screen instead of conversation with x,y,z
-        }
-
-      
-         
     }
   return (
     <div className={`flex h-screen antialiased ${checked ? 'text-gray-light' : 'text-gray-800'} `}>
@@ -275,7 +260,7 @@ function Chat() {
             />
           </div>
           <div className="text-sm font-semibold mt-2">{JSON.parse(localStorage.getItem('user')).data.username}</div>
-          <div className="text-xs text-gray-500">Lead UI/UX Designer</div>
+          <div  className="text-xs text-gray-700">Lead UI/UX Designer</div>
      
           <div className="flex justify-center">
   <div className="form-check form-switch">
@@ -285,7 +270,12 @@ function Chat() {
     <label className="form-check-label inline-block text-gray-800" htmlFor="flexSwitchCheckChecked">Theme</label>
   </div>
 </div>
-          <button  onClick={()=>{navigate('/')}}className="bg-transparent hover:bg-blue-500 mt-2 text-blue-700 font-semibold hover:text-white py-1 px-2 border border-blue-500 hover:border-transparent rounded">
+          <button  onClick={()=>{
+             
+            localStorage.removeItem('user')
+            navigate('/')
+            navigate(0)
+            }}className="bg-transparent hover:bg-blue-500 mt-2 text-blue-700 font-semibold hover:text-white py-1 px-2 border border-blue-500 hover:border-transparent rounded">
   Logout
   
 </button>
@@ -324,27 +314,31 @@ function Chat() {
 
    connectedUser.isConnected && connectedUser.username == user.username ? <span className="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s		 rounded-full"></span>
          : <span className="top-7 left-7 absolute  w-3 h-3 bg-red-400 border-4s		 rounded-full"></span>   } */}
-
+   <>
 { 
-    
-    connectedUsers.length > 0 && connectedUsers.map( cUser =>(
+   
+    connectedUsers && connectedUsers.map( cUser =>(
       
       cUser.isConnected &&  cUser.username == user.username 
-        ? (<span className="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s		 rounded-full"></span>
-        
-        
-       ) : 
+        ?
+         
+        (<span className="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s		 rounded-full"></span>) : 
        (<span className="top-7 left-7 absolute  w-3 h-3 bg-red-400 border-4s		 rounded-full"></span> )
     )
           )
+          
+  
       }
+   { !isOnline ? <span className="top-7 left-7 absolute  w-3 h-3 bg-red-400 border-4s		 rounded-full"></span>  : "" }
+</>
 </div>
               <div className="ml-2 text-sm font-semibold">{user.username}</div>
               <div
                 className="flex items-center justify-center ml-auto text-xs text-white bg-red-500 h-4 w-4 rounded leading-none"
               >
-                {notificationCount}
+                 {notificationCount}
               </div>
+             
               <div className="flex space-x-2 justify-center">
 </div>
             </button>
@@ -360,16 +354,18 @@ function Chat() {
               >7</span
             >
           </div>
+          <Groups/>
           <div className="flex flex-col space-y-1 mt-4 -mx-2">
             <button
               className="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2"
             >
+  
               <div
                 className="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full"
               >
-                F
+                G
               </div>
-              <div className="ml-2 text-sm font-semibold">Fake Group</div>
+              <div className="ml-2 text-sm font-semibold">Available Groups</div>
             </button>
           </div>
         </div>
@@ -411,7 +407,7 @@ function Chat() {
                         message.messageReceiver == currentUserId && message.messageSender == userToDM._id ?  
                          <div className="flex items-center justify-start flex-row-reverse">
                          <div
-                           className="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0"
+                           className="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-700 flex-shrink-0"
                          >
                            <img src={userToDM.profileAvatar} 
                         className=' object-cover h-10 w-10 rounded-full'/>
@@ -471,10 +467,12 @@ function Chat() {
           <div
             className={`flex flex-row items-center h-16 rounded-xl ${checked ? 'bg-dark' : 'bg-white'} w-full px-4`}
           >
-            <div>
+ 
+            <div className='flex'>
+            <FaVideo className='ml-2 mr-2 cursor-pointer'  size="1.3em" color="#a29bfe"/>
 
               <button
-                className="flex items-center justify-center text-gray-400 hover:text-gray-600"
+                className="flex items-center  	 justify-center text-gray-400 hover:text-gray-600"
               >
 
                 <svg
@@ -501,11 +499,12 @@ function Chat() {
                   onInput = { (e) => { 
                     socket.emit('isTyping',{ user : user.username,message:` is typing ...  `})
                   }}
-                          onClick={()=>setEmojiSelected(!emojiSelected)}
+                          // onClick={()=>setEmojiSelected(!emojiSelected)}
 
                   onChange={(e)=>setMessage(e.target.value)}
                   className="flex w-full border rounded-xl focus:outline-none focus:border-indigo-300 pl-4 h-10"
                 />
+                
                 <button
                                 onClick={()=>setEmojiSelected(!emojiSelected)}
 
@@ -554,7 +553,7 @@ function Chat() {
             </div>
           </div>
         </div>
-      </div>):''}
+      </div>):(<p>Nothing to see here</p>)}
     </div>
   </div>
   )
