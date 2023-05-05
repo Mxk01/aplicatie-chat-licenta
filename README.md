@@ -13,4 +13,4 @@ npm start\
 Install Postman for testing the APIs  and  use mongodb Atlas to check the db collections 
 
 
-[![Click](https://user-images.githubusercontent.com/61979889/236531918-c51f0fca-a28f-48d5-a6af-a15694faf651.png)(https://www.youtube.com/watch?v=2fkICSQFDuQ&feature=youtu.be)
+![Click](https://user-images.githubusercontent.com/61979889/236531918-c51f0fca-a28f-48d5-a6af-a15694faf651.png)(https://www.youtube.com/watch?v=2fkICSQFDuQ&feature=youtu.be)
