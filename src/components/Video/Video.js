@@ -1,17 +1,18 @@
 import {useState,useRef,useEffect} from 'react'
-import { FaVolumeMute,FaVideoSlash } from "react-icons/fa";
+import { FaVolumeMute,FaVolumeUp,FaVideoSlash } from "react-icons/fa";
 
 import Peer from 'peerjs'
 function Video() {
  let [myPeerId ,setMyPeerId] = useState('');
+ let [isVideoActive,setVideoActive] = useState(false);
  // getting a reference to both videos
  const mVideo = useRef(null);
  const rVideo = useRef(null); 
  const [peerIdToConnect,setPeerIdToConnect] = useState('');
  const peerObj = useRef(null);
  let [user,setCurrentUser]  = useState(JSON.parse(localStorage.getItem('user')));
-
- let vOptions = {audio:false,video:true,width:200,height:200};
+ let [muted,setIsMuted] = useState(false);
+ let vOptions = {audio:muted,video:true,width:200,height:200};
   useEffect(()=> {
     // peer instance 
    const peer = new Peer();
@@ -78,14 +79,22 @@ function Video() {
       onClick={()=> callPeer(peerIdToConnect)}
       type="button" className="text-white  mt-2 bg-gradient-to-br pb-4 from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-md ml-2 text-sm px-5 py-2.5 text-center mr-2 mb-2">Connect</button>
       </div>
-      <div  class=" items-center  flex">  
-      <video style={{width:"300px",height:"300px",borderRadius:"30px"}} ref={mVideo}></video>
-      <video style={{width:"300px",height:"300px",borderRadius:"30px"}}  className="ml-5"  ref={rVideo}></video>
+      <div  className=" items-center  flex">  
+      <video style={{width:"280px",height:"250px",borderRadius:'5px',padding:'20px',backgroundColor:'#34495e',marginBottom:'5px',
+      // filter: `blur(${isVideoActive ? '0px':'25px'})`
+    }} ref={mVideo}></video>
+      <video style={{width:"280px",height:"250px",borderRadius:'5px',padding:'20px',backgroundColor:'#34495e',marginBottom:'5px'}}  className="ml-5"  ref={rVideo}></video>
       </div>
       <div className="flex justify-center items-center"> 
-      <span class="bg-gray-100 flex justify-center items-center text-gray-800 text-xs font-medium mr-2 px-4 py-2   rounded dark:bg-gray-700 dark:text-gray-300">
-      <FaVolumeMute className="cursor-pointer" color="#a29bfe" size="1.5rem" />
-      <FaVideoSlash className="cursor-pointer ml-4" color="#a29bfe" size="1.5rem"  />
+      <span className="bg-gray-100 flex justify-center items-center text-gray-800 text-xs font-medium mr-2 px-4 py-2   rounded dark:bg-gray-700 dark:text-gray-300">
+      
+     {muted ?       <FaVolumeMute onClick={() => setIsMuted(!muted) }className="cursor-pointer" color='#eb4d4b'   size="1.5rem" /> :
+      <FaVolumeUp onClick={()=>setIsMuted(!muted)} className="cursor-pointer"  color='#a29bfe'  size="1.5rem" />  
+     }
+      <FaVideoSlash className="cursor-pointer ml-4" onClick={()=>{
+        setVideoActive(!isVideoActive)
+       
+        } } color="#a29bfe" size="1.5rem"  />
       </span>
 
        

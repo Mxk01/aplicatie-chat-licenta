@@ -1,72 +1,12 @@
-import React,{useState} from 'react'
+import React,{useContext, useState} from 'react'
 import './Register.css'
+import { AuthContext } from '../../../context/AuthContext'
 import {Link,useNavigate} from 'react-router-dom'
 import {useFormik} from 'formik'
 import axios from 'axios'
 function Register() {
 
-  let [confirmPassword,setConfirmPassword] = useState('');
-  let navigate = useNavigate();
-  let formik = useFormik({
-    initialValues : {
-      profileAvatar:'',
-      email:'',
-      username:'',
-      password:''
-    },
-    onSubmit: async(values)=>{
-      
-
-      let dateForma = new FormData();
-      for(let value in values){
-        // adaugam field-urile form-ului 
-        // de forma  'photoUrl':'http://localhost:5000/whatever 
-        dateForma.append(value,values[value]);
-      }
-      try {
-        let email = values.email;
-       
-        let userExists = await axios.get(`api/user/find-user/${email}`)
-        console.log(userExists)
-        
-        
-        if(values.password.length<4  || values.password.length > 15){
-          alert('Parola trebuie sa fie intre 4 si 15 caractere!')
-        }
-         // validare empty fields
-        if(values.username=='' || values.email=='' || values.password==''){
-          alert("Please fill in all the fields!")
-        }
-         // avatar validation
-        if(values.profileAvatar.name!='' )  {
-          console.log(userExists)
-          if(userExists.data.message!='Username already exists!')
-          {
-            let registeredUser = await axios.post('api/user/create-user',dateForma)
-            navigate('/');
-            navigate(0)
-          } 
-          else 
-          {
-              alert("Username already exists!");
-              navigate('/register');
-              navigate(0)
-          }  
-      
-      }
-        else {
-          alert("Please upload an image!")
-        }
-    
-    }
-      catch(e){
-
-      }
-    }
-  })
-  let changeImage = (e) => {
-     formik.setFieldValue('profileAvatar',e.currentTarget.files[0])
-  }
+  let {formik,changeImage,confirmPassword,setConfirmPassword} = useContext(AuthContext);
   return (
     <div className="register__container">
         

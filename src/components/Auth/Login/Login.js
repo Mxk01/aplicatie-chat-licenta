@@ -1,4 +1,4 @@
-import React,{useState} from 'react'
+import React,{useState,memo} from 'react'
 import './Login.css'
 import axios from 'axios'
 import {Link,useNavigate} from 'react-router-dom'
@@ -12,9 +12,6 @@ function Login() {
    let  loggedUser = await axios.post('api/user/login-user',{email,password})
    console.log(loggedUser)
    localStorage.setItem('user',JSON.stringify(loggedUser));
-   console.log(JSON.parse(localStorage.getItem('user')))
-   // check if status is 200 so everything is ok then stringify the result and store in localStorage
-   // then simply can use the image after 
    navigate('/chat')
    navigate(0)
  }
@@ -79,4 +76,4 @@ function Login() {
   )
 }
 
-export default Login
+export default memo(Login)
