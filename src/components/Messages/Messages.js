@@ -51,9 +51,6 @@ const Messages = () => {
          <div className="col-start-1 col-end-8 p-3 rounded-lg">
            
               <div className="flex flex-row items-center">
-              {/* <img  fetchpriority="low" src={user.data.profileAvatar} 
-               className=' object-cover h-10 w-10 rounded-full'/>
-                  */}
                 <div
                   className="relative ml-3 text-sm bg-gradient-to-r text-white w-56 max-h-20		break-words		 from-indigo-500 via-purple-500 to-pink-500 py-2 px-4 shadow rounded-xl"
                 >

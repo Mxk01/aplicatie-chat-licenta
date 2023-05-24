@@ -60,7 +60,6 @@ const getCurrentUsers = useCallback(async () => {
 
 const getCurrentGroups = useCallback(async () => {
   let groups = await axios.get('/api/user/get-groups')
-  // console.log(groups);
   setGroups(groups.data);
 }, []);
 
@@ -84,7 +83,6 @@ const adauga_emoji = useCallback((emoji_selectat) => {
 
  const getCurrentGroup = useCallback(async (groupName) => {
   let group = await axios.get(`/api/user/get-group-messages/${groupName}`);
-  console.log(groupName)
   setGroupMessages(group.data.messages);
 }, [groupMessages]);
 
