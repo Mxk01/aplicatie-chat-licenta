@@ -34,62 +34,66 @@ app.use('/api/admin',routesAdmin)
 //  [  { username : 'addasasd' , socketId : 'asdaq21e21wdqad' } , {username:'asdsad',socketId:'aw322r'}]
 let utilizatoriOnline = [];
 
-const adaugaUtilizator = (username,sId) => {
- // sId inseamna socketId
- // daca nu este niciun utilizator cu acest username  atunci executa cea de-a doua expresie
+
+
+ const adaugaUtilizator = (username,sId) => {
  !utilizatoriOnline.some(uOn => uOn.username === username ) && utilizatoriOnline.push({username,sId,isConnected:true})
 }
 const stergeUtilizator = (sId) => {
-   // deconecteaza utilizator
-  //  console.log('dasadsd'+utilizatoriOnline.filter(u=>u.sId == sId).map((u)=>u.username));
-//    utilizatoriOnline.filter(u=>u.sId == sId)[0].isConnected = false
-// console.log(`Lista util curenti ${utilizatoriOnline[0]}`)
+   utilizatoriOnline = utilizatoriOnline.filter(u=>u.sId != sId)
+   return utilizatoriOnline
 }
 const  getUtilizatorOnline = (username) => {
       return utilizatoriOnline.find(user => user.username == username);
 }
+
 
 io.on('connection',(socket)=>{
 
     socket.on('utilizator-nou-online',(username)=>{
     
        adaugaUtilizator(username,socket.id);
-      //  console.log(utilizatoriOnline);
-       if(utilizatoriOnline.length > 0) { 
-       io.emit('utilizator-online',utilizatoriOnline)
-       }
+       socket.emit('utilizator-online',utilizatoriOnline)
+  
+
     })
 
-    socket.on('creeaza-room',({groupName,groupMembers})=> {
-      console.log(groupName,groupMembers)
-    })
-    socket.on("trimiteNotificare",({ senderName,receiverName,mesaj })=>{
-        // console.log(`Sender name ${senderName}, Receiver name ${receiverName}`)
-        let userReceiverID = getUtilizatorOnline(receiverName);
-        // console.log(`Detalii user receiver : ${userReceiverID} `)
-         if(userReceiverID) {
-            // obtine id-ul persoanei careia vrem sa ii trimitem notificarea 
-            let {sId} = userReceiverID;
-         
-        io.to(sId).emit("obtineNotificare",{receiverName,mesaj})
-        }
-        else {
-          console.log('Acest utilizator nu este online!')  
-          return; 
-        }
-    })
    
 
+    
 
-   socket.on('send-message',({message,senderName,receiverName})=>{
+    socket.on('friend-request',({receiverName,senderName})=>{
+      let userReceiverID = getUtilizatorOnline(receiverName);
+      if(userReceiverID!=undefined) {
+      let {sId} = userReceiverID;
+      io.to(sId).emit('receive-friend-request',`${senderName} v-a trimis o cerere de prietenie!`)
+      
+      }
+
+
+
+     })
+
+
+   socket.on('send-message',({message,receiverName})=>{
     let userReceiverID = getUtilizatorOnline(receiverName);
     if(userReceiverID!=undefined) {
     let {sId} = userReceiverID;
     io.to(sId).emit('receive-message',message)
+    
     }
    })
+
+   socket.on('logout',()=>{
+    utilizatoriOnline = stergeUtilizator(socket.id);
+    socket.emit('utilizator-online',utilizatoriOnline)
+   })
+   
+
    socket.on('disconnect',()=>{
-    stergeUtilizator(socket.id);
+   
+    // socket.emit('utilizator-online',utilizatoriOnline)
+
    })
 })
 

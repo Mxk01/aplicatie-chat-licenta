@@ -19,6 +19,9 @@ let messageSchema = new mongoose.Schema({
     },
     isGroupMessage: {type:Boolean}, 
     isDirectMessage:{type:Boolean},
-    messageGroup: {type:Schema.Types.ObjectId,ref:"Group"}
+    messageGroup: {type:String}
 })
 module.exports = mongoose.model('Message',messageSchema)
+
+
+

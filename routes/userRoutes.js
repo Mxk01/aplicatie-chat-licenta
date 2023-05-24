@@ -7,35 +7,32 @@ let dotenv = require('dotenv');
 let jwt = require('jsonwebtoken');
 let Message = require('../models/Message')
 let multer = require('multer')
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, './uploads');
-    },
-    filename: (req, file, cb) => {
-      cb(
-        null,
-        new Date().toISOString().replace(/:/g, '-') + '-' + file.originalname
-      );
-    },
-  });
-
-  const filefilter = (req, file, cb) => {
-    if (
-      file.mimetype === 'image/png' ||
-      file.mimetype === 'image/jpg' ||
-      file.mimetype === 'image/jpeg'
-    ) {
-      cb(null, true);
-    } else {
-      cb(null, false);
-    }
-  };
-  
-  const upload = multer({ storage: storage, filefilter: filefilter });
-  
-
+ 
 dotenv.config()
+
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'NexoStorage',
+    allowed_formats: ['jpg', 'jpeg', 'png']
+  }
+});
+
+
+const upload = multer({ storage });
+
+
+
 
 
 let isUserAuthenticated = async(req,res,next) =>{
@@ -68,12 +65,22 @@ let isUserAuthenticated = async(req,res,next) =>{
 
 // upload.single('profileAvatar')
 router.post('/create-user',upload.single('profileAvatar'),async(req,res)=>{
-     console.log(upload)
+     res.send(req.file)
   let user = new User(req.body);
     req.body.password  = await bcrypt.hash(req.body.password,10)
+    console.log(req.file);
     // req.protocol - http 
     //  req.get('host') - localhost
-    req.body.profileAvatar  = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    // req.body.profileAvatar  = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    
+    // resize image and get its url
+    const resizedImage = cloudinary.url(req.file.filename,{
+      transformation:[
+        {width:150,height:150,crop:'fill',crop:'fill'}
+      ]
+    })
+    
+    req.body.profileAvatar = resizedImage;
     //   expira in  4 ore de la data curenta 
    let token =  jwt.sign(req.body,process.env.JWT_SECRET,{expiresIn:Date.now()+14400000});
   user.password = req.body.password;
@@ -88,7 +95,7 @@ router.post('/create-user',upload.single('profileAvatar'),async(req,res)=>{
         }
     })
     await user.save();
-    res.status(200).json({message:user});
+      res.status(200).json({message:user});
   
 });
 
@@ -118,7 +125,7 @@ router.post('/login-user',(req,res)=>{
 
 router.get('/users-list',isUserAuthenticated,async(req,res)=>{
    
-       let users  = await User.find({}).where('_id').ne(req.user._id);
+       let users  = await User.find({}).where('_id').ne(req.user._id).lean();
        return res.status(200).json({message:users});
 
     
@@ -128,6 +135,7 @@ router.get('/users-list',isUserAuthenticated,async(req,res)=>{
   router.get('/find-user/:email',async(req,res)=>{
    let email = req.params.email;
    User.exists({email},(err,doc)=>{
+     if(err) res.status(404).json({message:e})
     if(doc?._id) {
         res.status(409).json({message:'Username already exists!'})
     }
@@ -154,7 +162,7 @@ router.get('/direct-messages/:senderId/:receiverId',isUserAuthenticated,async(re
       { messageReceiver: messageSender },
       {messageReceiver}]
     }
-   );
+   ).lean();
    res.status(200).json({messages});
   }
   catch(e){
@@ -162,6 +170,18 @@ router.get('/direct-messages/:senderId/:receiverId',isUserAuthenticated,async(re
   }
 
   })
+
+router.get('/get-group-messages/:group',async(req,res)=> {
+  try {
+  let messages = await Message.find({isDirectMessage:false,messageGroup:req.params.group}).lean();
+
+  res.status(200).json({messages});
+  }
+  catch(e){
+    res.status(404).json({error:e.message})
+  }
+
+})
 
 router.post('/add-message/:senderId/:receiverId',async(req,res)=>{
   try {
@@ -185,47 +205,65 @@ router.post('/add-message/:senderId/:receiverId',async(req,res)=>{
 
 });
 
+
+
+router.post('/add-group-message/:groupName',async(req,res)=>{
+  try {
+  let {groupName} = req.params;
+  let {isDirectMessage,contents} = req.body;
+  let message = new Message({
+    isDirectMessage,
+    contents,
+    messageGroup:groupName
+  });
+  await message.save();
+  res.json({message});
+  }
+  catch(e){
+    res.json({error:e.message})
+  }
+
+});
+
+
+
+
+
+
 router.delete('/delete-messages',async(req,res)=>{
   await  Message.deleteMany();
 })
+  router.get('/get-groups',async(req,res)=>{
+    let group = await Group.find({});
+    res.json(group);
+  })
 
-// Rute pentru GRUP - trebuie refactorizate mai tarziu 
-
-router.post('/create-chat-group',(req,res)=>{
-  try { 
-   let {groupName,groupMembers} = req.body;
-  let chatGroup  = new Group({groupName})
-  console.log(groupName)
-    Group.exists({groupName},async(err,doc)=>{
-     if(err) { console.log(err.message); }
-     else { 
-        if(doc){
-          // 409 status code b/c resource already exists
-           return  res.status(409).json({message:"A group  with this name already exists!"})
-        }
-        else {
-          for(let groupMember of groupMembers)
-          {
-            // console.log(groupMember)
-          chatGroup.groupMembers.push(groupMember.userIdDB)
-          }
-          chatGroup = await chatGroup.save(); 
-          res.json({message:`Chat group has succesfully been created!`});
-        }
-    }
+  //  router.get('/get-group',async(req,res)=> { 
+  //   try {
     
-    })
-  }
-  catch(e) {
-    res.status(500).json({error:e.message});
-  }
-})
-
-router.get('/get-groups',async(req,res)=>{
+  //   let {groupName,groupMembers} = req.body;
+  //   const groupMessages = await Message.find({ 'messageSender': 
+  //   { $in: groupMembers },
+  //   messageGroup:groupName,
+  //   isDirectMessage:false });
+  //   if(groupMessages!=[]) {
+  //   res.status(200).json({messages:groupMessages})
+  //   }
+  //   else {
+  //     res.status(404).json({message:"There is no such group!"})
+  //   }
   
-  // find all the groups where the id of current user is in the groupMembers array 
-  // let groups =  await Group.find({});
-  // return  res.json({groups});
-})
+  //   }
+  //   catch(e){
+  //     res.status(404).json({error:"No messages in this group"})
+  //   }
+  //  })
+
+   router.post('/create-group',async(req,res)=>{
+      let group = new Group({groupName:req.body.groupName,groupMembers:req.body.groupMembers})
+      group = await group.save();
+        res.json({group})
+  })
+
 
 module.exports = router;
