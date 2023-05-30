@@ -77,14 +77,14 @@ const adauga_emoji = useCallback((emoji_selectat) => {
  const sendGroupMessage = useCallback(async (e,groupName)=>{
   e.preventDefault();
 
-      let groupMessage = await axios.post(`/api/user/add-group-message/${groupName}`,{contents:message,isDirectMessage:false})
-      setGroupMessages([...groupMessages,{contents:message}]);
+     await axios.post(`/api/user/add-group-message/${groupName}`,{contents:message,isDirectMessage:false})
+     setGroupMessages((prevGroupMessages) => [...prevGroupMessages, { contents: message }]);
  })
 
  const getCurrentGroup = useCallback(async (groupName) => {
   let group = await axios.get(`/api/user/get-group-messages/${groupName}`);
   setGroupMessages(group.data.messages);
-}, [groupMessages]);
+}, [groupName]);
 
   const sendMessage = useCallback(async (e) => {
     e.preventDefault();
@@ -151,7 +151,7 @@ useEffect(() => {
 
   socket?.on('receive-message', async ({message}) => {
     if (message.contents && message.receiverId == userToDM._id) {
-      setMessages([...messages, message.contents]);
+      setMessages(prevMessages => [...prevMessages, message.contents]);
     }
   });
 

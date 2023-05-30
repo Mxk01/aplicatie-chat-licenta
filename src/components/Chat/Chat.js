@@ -6,7 +6,8 @@ import Picker from '@emoji-mart/react'
 import { FaVideo,FaUserFriends} from "react-icons/fa";
 import { ChatContext } from '../../context/ChatContext'
 import axios from 'axios'
-import Messages from '../Messages/Messages'
+const Messages = React.lazy(() => import('../Messages/Messages'));
+
 function Chat() {
  let { 
   createGroup,
