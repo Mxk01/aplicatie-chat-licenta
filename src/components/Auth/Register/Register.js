@@ -3,7 +3,7 @@ import './Register.css'
 import { AuthContext } from '../../../context/AuthContext'
 import {Link,useNavigate} from 'react-router-dom'
 import {useFormik} from 'formik'
-import axios from 'axios'
+
 function Register() {
 
   let {formik,changeImage,confirmPassword,setConfirmPassword} = useContext(AuthContext);
