@@ -1,8 +1,7 @@
-import React,{useContext, useState} from 'react'
+import React,{useContext} from 'react'
 import './Register.css'
 import { AuthContext } from '../../../context/AuthContext'
-import {Link,useNavigate} from 'react-router-dom'
-import {useFormik} from 'formik'
+import {Link} from 'react-router-dom'
 
 function Register() {
 

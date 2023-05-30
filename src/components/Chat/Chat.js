@@ -1,11 +1,8 @@
-import React, {useEffect, useState,useRef,useCallback,memo, useContext} from 'react'
-import { useNavigate } from 'react-router'
-import {io} from 'socket.io-client'
+import React, { useState,memo, useContext} from 'react'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { FaVideo,FaUserFriends} from "react-icons/fa";
 import { ChatContext } from '../../context/ChatContext'
-import axios from 'axios'
 const Messages = React.lazy(() => import('../Messages/Messages'));
 
 function Chat() {
