@@ -21,6 +21,14 @@ const io = new Server(server,{
     }
 });
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://nexo-talk.onrender.com');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
+
 mongoose.connect(process.env.MONGO_URI).then(()=>console.log('Connected to mongo'))
 .catch(e=>console.log(e))
 app.use(cors());
