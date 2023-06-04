@@ -15,7 +15,7 @@ const {Server} = require("socket.io");
 const io = new Server(server,{
     cors : {
         // origin is where we accept requests from
-        origin :'https://nexo-talk.onrender.com/chat',
+        origin :'https://nexo-talk.onrender.com/',
         methods:['GET','POST'],
         credentials:true
     }
