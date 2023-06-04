@@ -15,7 +15,7 @@ const {Server} = require("socket.io");
 const io = new Server(server,{
     cors : {
         // origin is where we accept requests from
-        origin :'https://nexo-talk.onrender.com',
+        origin :'https://nexo-talk.onrender.com/chat',
         methods:['GET','POST'],
         credentials:true
     }
@@ -54,7 +54,7 @@ io.on('connection',(socket)=>{
     socket.on('utilizator-nou-online',(username)=>{
     
        adaugaUtilizator(username,socket.id);
-       socket.emit('utilizator-online',utilizatoriOnline)
+       io.emit('utilizator-online',utilizatoriOnline)
   
 
     })
@@ -87,7 +87,7 @@ io.on('connection',(socket)=>{
 
    socket.on('logout',()=>{
     utilizatoriOnline = stergeUtilizator(socket.id);
-    socket.emit('utilizator-online',utilizatoriOnline)
+    io.emit('utilizator-online',utilizatoriOnline)
    })
    
 

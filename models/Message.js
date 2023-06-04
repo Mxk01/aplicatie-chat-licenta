@@ -20,7 +20,7 @@ let messageSchema = new mongoose.Schema({
     isGroupMessage: {type:Boolean}, 
     isDirectMessage:{type:Boolean},
     messageGroup: {type:String}
-})
+},{timestamps:true})
 module.exports = mongoose.model('Message',messageSchema)
 
 
