@@ -61,7 +61,7 @@ export let AuthProvider = ({children}) => {
   
           if(validationsOk)
           {
-          let registeredUser = await axios.post('https://nexotalk.onrender.com/api/user/create-user',dateForma)
+          let registeredUser = await axios.post('/api/user/create-user',dateForma)
           console.log(registeredUser)
           navigate('/');
           navigate(0)

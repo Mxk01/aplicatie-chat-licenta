@@ -1,8 +1,9 @@
-import React, { useState,memo, useContext} from 'react'
+import React, { useState,memo, useContext,useRef} from 'react'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { FaVideo,FaUserFriends} from "react-icons/fa";
 import { ChatContext } from '../../context/ChatContext'
+import { format as timeagoFormat } from 'timeago.js';
 const Messages = React.lazy(() => import('../Messages/Messages'));
 
 function Chat() {
@@ -12,6 +13,7 @@ function Chat() {
   getCurrentGroups,
   getCurrentUsers,
   adauga_emoji,
+  term,
   sendMessage,
   showMessages,
   /* state variables */
@@ -53,6 +55,7 @@ setIsDirectMessage,
 groups,
 setGroups,
 message,
+searchUsers,
 setMessage,
 messages,
 setMessages,
@@ -64,7 +67,10 @@ groupName,
 setGroupName,
 groupMembers,
 setGroupMembers} =  useContext(ChatContext)
-let [groupSelected,setGroupSelected] = useState(true);
+ let [groupSelected,setGroupSelected] = useState(true);
+ const date_restante = /restante|restantier|restanta|re/ig;
+
+
   return (
     <div className={`flex h-screen antialiased ${checked ? 'text-gray-light' : 'text-gray-800'} `}>
 
@@ -118,6 +124,7 @@ let [groupSelected,setGroupSelected] = useState(true);
                     onClick={(e)=>{
                      e.preventDefault()
                      createGroup()
+                     
                     }}>Save</button>
                
                 </form>
@@ -125,7 +132,7 @@ let [groupSelected,setGroupSelected] = useState(true);
         </div>
     </div>
 </div> 
-    <div className="flex flex-row h-full w-full overflow-x-hidden">
+    <div className="flex flex-row h-full w-full overflow-x-hidden bg-purple">
    
       <div className={`flex flex-col py-8 pl-6 pr-4 w-64 ${checked ? 'bg-electro-magnetic' :'bg-white'} flex-shrink-0`}>
         <div className="flex flex-row items-center justify-center h-12 w-full">
@@ -184,10 +191,27 @@ let [groupSelected,setGroupSelected] = useState(true);
 </button>
         </div>
    
-        <div className="flex flex-col mt-8">
+        <div className="flex flex-col mt-5">
+
+
         <button type="button" className="text-white bg-gradient-to-br from-pink-500 to-orange-400 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2"
         onClick={(e)=>setGroupForm(!groupForm)}> Create Group </button>
+<div className='flex'> 
+<input
+  type="email"
+  id="helper-text"
+  aria-describedby="helper-text-explanation"
+  className="bg-transparent border border-gray-300 mb-1 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full	 p-2  dark:bg-transparent dark:border-gray-600 dark:placeholder-gray-400 dark:blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+  placeholder="Searching ..."
+  ref={term}
+  onInput={()=>searchUsers()}
+   
+/>
+{/* <button className='ml-2 text-white bg-gradient-to-br from-pink-500 to-orange-400 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800 font-medium rounded-lg text-sm p-2 text-center mr-2 mb-2 w-1/2' onClick={()=>searchUsers()}>Search</button> */}
 
+</div>
+ 
+ 
           <div className="flex flex-row items-center justify-between text-xs">
             <span className="font-bold">Active Conversations</span>
           
@@ -241,11 +265,12 @@ let [groupSelected,setGroupSelected] = useState(true);
               >
                  {notificationCount}
               </div>
-              <FaUserFriends onClick={()=>socket.emit('friend-request',{receiverName:'Sylph',senderName:'Tes adsa'})} className="ml-1" color='#a29bfe'  size="1.2rem"/>
+              <FaUserFriends onClick={()=>socket?.emit('friend-request',{receiverName:'Sylph',senderName:'Tes adsa'})} className="ml-1" color='#a29bfe'  size="1.2rem"/>
                
               <div className="flex space-x-2 justify-center">
 </div>
             </button>
+           
             </React.Fragment>
             }): <p>No available users</p>}
 
@@ -253,14 +278,14 @@ let [groupSelected,setGroupSelected] = useState(true);
           </div>
      
          
-          <div className="flex flex-row items-center justify-between text-xs mt-6">
+          <div className="flex flex-row items-center justify-between text-xs mt-2">
             <span className="font-bold">Groups</span>
             <span
               className="flex items-center justify-center bg-gray-300 h-4 w-4 rounded-full"
               >{groups.length}</span
             >
           </div>
-          <div className="flex flex-col space-y-1 mt-4 -mx-2  h-10 overflow-y-scroll ">
+          <div className="flex flex-col space-y-1 mt-2 -mx-2  h-10 overflow-y-scroll ">
           {/* <div className="ml-2 text-sm font-semibold">Available Groups</div> */}
           { groups!=[] && groups.map( g => ( 
        
@@ -288,21 +313,29 @@ let [groupSelected,setGroupSelected] = useState(true);
         </div>
      
       </div>
-      
+    
       { Object.keys(userToDM).length !== 0 && !groupSelected?  (
       <div className="flex flex-col flex-auto h-full p-6 scroll-smooth md:h-full" style={{backgroundColor:'#9c88ff'}}>
- 
+   
         <div
           className={`flex flex-col flex-auto flex-shrink-0 rounded-2xl  ${checked ? 'bg-electro-magnetic' :'bg-white'} h-full p-4`}
         >
+    
                               <span>{userToDM.username}</span>
-
+                              <div className='flex mt-2 content-center align-middle'> 
+                              <button className=" text-blue-800 text-xs font-medium mr-2 px-2.5 py-2 rounded
+                               bg-transparent	 dark:text-orange-400 border border-orange-400 w-1/4" onClick={()=>setMessages(messages.filter(m=>date_restante.test(m.contents)))}>Restante</button>             
+                                       <button className=" text-blue-800 text-xs font-medium mr-2 px-2.5 py-2 rounded
+                               bg-transparent	 dark:text-red-400 border border-red-400 w-1/4">Burse</button>            
+                                           <button className=" text-blue-800 text-xs font-medium mr-2 px-2.5 py-2 rounded
+                               bg-transparent	 dark:text-purple-400 border border-purple-400 w-1/4">Excursii</button>              
+                                </div>
           <div className="flex flex-col h-full overflow-x-auto mb-4">
 
             <div className="flex flex-col h-full">
                <div className="grid grid-cols-12 gap-y-2">
                 
-               {messages ?  messages.map( (message) =>  {
+               {messages ?  messages?.map( (message) =>  {
                     return( 
                <React.Fragment key={message._id}>  
                { 
@@ -314,9 +347,12 @@ let [groupSelected,setGroupSelected] = useState(true);
                    className=' object-cover h-10 w-10 rounded-full'/>
                      
                     <div
-                      className="relative ml-3 text-sm bg-gradient-to-r text-white w-56 max-h-20		break-words		 from-indigo-500 via-purple-500 to-pink-500 py-2 px-4 shadow rounded-xl"
+                      className="relative ml-3 text-sm bg-gradient-to-r text-white w-60 max-h-20		break-words		 from-indigo-500 via-purple-500 to-pink-500 py-2 px-4 shadow rounded-xl"
                     >
                       <p className='break-words	w-80	'>{message.contents}</p>
+
+                      <span className=' text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:text-red-100 flex
+                      p-4'>Posted  {timeagoFormat(message.createdAt)} </span>
                     </div>
                   </div>
                 </div>
@@ -338,8 +374,11 @@ let [groupSelected,setGroupSelected] = useState(true);
                             className="relative mr-3 text-white text-sm bg-gradient-to-r from-pink-500 to-yellow-500 py-2 px-4 shadow rounded-xl"
                           >
                         <div>{message.contents} </div> 
-                     
-                    </div>
+                       
+
+                        <span className=' text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:text-red-100 flex
+                      p-4'>Posted  {timeagoFormat(message.createdAt)} </span>
+                                          </div>
                     </div>
 
                         }
@@ -347,7 +386,6 @@ let [groupSelected,setGroupSelected] = useState(true);
                      
                  </div>
                  <div ref={messagesBottom} />
-
                 </React.Fragment>
                 
                 )
@@ -437,10 +475,11 @@ let [groupSelected,setGroupSelected] = useState(true);
               </div>
             </div>
             <div className="ml-4">
+             
               <button
                 className="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 rounded-xl text-white px-4 py-2 ml-2 flex-shrink-0"
            onClick={(e)=>sendMessage(e)}   >
-                <span>Send</span>
+                <span >Send</span>
                 <span className="ml-2">
                   <svg
                     className="w-4 h-4 transform rotate-45 -mt-px"
@@ -458,9 +497,12 @@ let [groupSelected,setGroupSelected] = useState(true);
                   </svg>
                 </span>
               </button>
+            
             </div>
           </div>
         </div>
+        
+
       </div>):<Messages/>
       }
  

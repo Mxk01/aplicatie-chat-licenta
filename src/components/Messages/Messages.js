@@ -4,13 +4,15 @@ import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { FaVideo} from "react-icons/fa";
 import { ChatContext } from '../../context/ChatContext'
- 
- 
+import { format as timeagoFormat } from 'timeago.js';
+
 const Messages = () => {
     let { 
  
         adauga_emoji,
         sendMessage,
+        setGroupMessage,
+        groupMessage,
         showMessages,
         /* state variables */
           messagesBottom,
@@ -42,7 +44,7 @@ const Messages = () => {
         <div className="flex flex-col h-full">
           <div className="grid grid-cols-12 gap-y-2">
             <span>{groupName}</span>
-           {groupMessages!=[] &&  groupMessages.map( (message) =>  {
+           {groupMessages.length!==0 &&  groupMessages.map( (message) =>  {
                 return( 
            <React.Fragment key={message._id}>  
            { 
@@ -51,9 +53,12 @@ const Messages = () => {
            
               <div className="flex flex-row items-center">
                 <div
-                  className="relative ml-3 text-sm bg-gradient-to-r text-white w-56 max-h-20		break-words		 from-indigo-500 via-purple-500 to-pink-500 py-2 px-4 shadow rounded-xl"
+                  className="relative ml-3 text-sm bg-gradient-to-r text-white w-60 max-h-20		break-words		 from-indigo-500 via-purple-500 to-pink-500 py-2 px-4 shadow rounded-xl"
                 >
                   <p className='break-words	w-80	'>{message.contents}</p>
+                  <span className=' text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:text-red-100 flex
+                      p-4'>Posted  {timeagoFormat(message.createdAt)}  </span>
+                                 
                 </div>
               </div>
             </div>
@@ -117,12 +122,13 @@ const Messages = () => {
         <div className="flex-grow ml-4">
           <div className="relative w-full">
           <textarea 
-            value={message}
+            value={groupMessage}
             onInput = { (e) => { 
               socket.emit('isTyping',{ user : user.username,message:` is typing ...  `})
             }}
 
-            onChange={(e)=>setMessage(e.target.value)}
+            onChange={(e)=>{ 
+              setGroupMessage(e.target.value); console.log(groupMessage)} }
            rows="1" className={`block mx-4 p-2.5 mr-2 w-full text-sm  bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500  ${checked ? 'dark:bg-gray-800 dark:text-white' : 'text-gray-900 bg-white' }  dark:border-gray-600 dark:placeholder-gray-400   dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Your message..."></textarea>
 
            
