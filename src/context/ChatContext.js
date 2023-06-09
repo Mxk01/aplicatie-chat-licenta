@@ -63,9 +63,6 @@ export  let ChatProvider = memo(({children})=>{
     else {
       getCurrentUsers();
     }
-
-  
-    
   })
 
 const createGroup = useCallback(async () => {
@@ -98,9 +95,12 @@ const adauga_emoji = useCallback((emoji_selectat) => {
 
  const sendGroupMessage = useCallback(async (e,groupName)=>{
   e.preventDefault();
-  
-   if(groupMessage!='') {
-   let gMessage = await axios.post(`/api/user/add-group-message/${groupName}`,{contents:groupMessage,isDirectMessage:false})
+  let sender = await axios.get('/api/user/get-current-user', config);
+
+   if(groupMessage!='' && sender.data.currentUser._id) {
+    console.log(sender.data.currentUser._id)
+    let gMessage = await axios.post(`/api/user/add-group-message/${groupName}/`,{contents:groupMessage,isDirectMessage:false,senderId:sender.data.currentUser._id})
+     console.log(gMessage)
     if(gMessage.status == 200) {
     getCurrentGroup(groupName)
     setGroupMessage('')
@@ -110,7 +110,7 @@ const adauga_emoji = useCallback((emoji_selectat) => {
 
  const getCurrentGroup = useCallback(async (groupName) => {
   let group = await axios.get(`/api/user/get-group-messages/${groupName}`);
-  
+   console.log(group)
   setGroupMessages(group.data.messages);
 }, [groupName]);
 
@@ -119,7 +119,7 @@ const adauga_emoji = useCallback((emoji_selectat) => {
     let sender = await axios.get('/api/user/get-current-user', config);
   
     if (userToDM && isDirectMessage && message != '') {
-      let messageOptions = {isDirectMessage:true, contents:message, photoPath:''};
+      let messageOptions = {isDirectMessage:true, contents:message, photoPath:user.data.profileAvatar};
       socket?.emit('send-message', {
         message: {...messageOptions},  
         senderName: user.username, 
@@ -177,8 +177,8 @@ useEffect(() => {
     alert(msg)
   });
 
-  socket?.on('receive-message', async ({message}) => {
-    if (message.contents && message.receiverId == userToDM._id) {
+  socket?.on('receive-message', async ({message,userReceiverId}) => {
+    if (message.contents!='' && userReceiverId == userToDM._id) {
       setMessages(prevMessages => [...prevMessages, message.contents]);
     }
   });

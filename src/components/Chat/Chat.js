@@ -3,10 +3,11 @@ import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { FaVideo,FaUserFriends} from "react-icons/fa";
 import { ChatContext } from '../../context/ChatContext'
-import { format as timeagoFormat } from 'timeago.js';
+const Modal = React.lazy(() => import('../Modal'));
 const Messages = React.lazy(() => import('../Messages/Messages'));
 
-function Chat() {
+
+ function Chat() {
  let { 
   createGroup,
   getCurrentGroup,
@@ -68,7 +69,16 @@ setGroupName,
 groupMembers,
 setGroupMembers} =  useContext(ChatContext)
  let [groupSelected,setGroupSelected] = useState(true);
- const date_restante = /restante|restantier|restanta|re/ig;
+  const [isOpen, setIsOpen] = useState(false);
+
+ const handleOpenModal = () => {
+   setIsOpen(true);
+ };
+
+ const handleCloseModal = () => {
+   setIsOpen(false);
+ };
+ 
 
 
   return (
@@ -111,6 +121,7 @@ setGroupMembers} =  useContext(ChatContext)
     <button type="button" className="text-white ml-6 bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-900 font-medium rounded-full text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:focus:ring-blue-600"
     onClick={()=>{ 
       setGroupMembers([...groupMembers,c._id])
+      console.log(groupMembers)
     }}>Add</button>
     </div>
 
@@ -246,7 +257,7 @@ setGroupMembers} =  useContext(ChatContext)
       cUser.isConnected && cUser.username == user.username
         ? 
        
-        (<span key={cUser.username} className="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s		 rounded-full"></span>) : '' 
+        (<span key={cUser.username} className="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s	  	 rounded-full"></span>) : '' 
   
  
     )
@@ -265,7 +276,7 @@ setGroupMembers} =  useContext(ChatContext)
               >
                  {notificationCount}
               </div>
-              <FaUserFriends onClick={()=>socket?.emit('friend-request',{receiverName:'Sylph',senderName:'Tes adsa'})} className="ml-1" color='#a29bfe'  size="1.2rem"/>
+              <FaUserFriends onClick={()=>socket?.emit('friend-request',{receiverName:'Andrei',senderName:'Tes adsa'})} className="ml-1" color='#a29bfe'  size="1.2rem"/>
                
               <div className="flex space-x-2 justify-center">
 </div>
@@ -277,8 +288,8 @@ setGroupMembers} =  useContext(ChatContext)
        
           </div>
      
-         
-          <div className="flex flex-row items-center justify-between text-xs mt-2">
+           <div className="flex flex-row items-center justify-between text-xs mt-2">
+            
             <span className="font-bold">Groups</span>
             <span
               className="flex items-center justify-center bg-gray-300 h-4 w-4 rounded-full"
@@ -324,7 +335,17 @@ setGroupMembers} =  useContext(ChatContext)
                               <span>{userToDM.username}</span>
                               <div className='flex mt-2 content-center align-middle'> 
                               <button className=" text-blue-800 text-xs font-medium mr-2 px-2.5 py-2 rounded
-                               bg-transparent	 dark:text-orange-400 border border-orange-400 w-1/4" onClick={()=>setMessages(messages.filter(m=>date_restante.test(m.contents)))}>Restante</button>             
+                               bg-transparent	 dark:text-orange-400 border border-orange-400 w-1/4" onClick={()=>{ 
+                                handleOpenModal()
+                              }}>Restante</button>   
+                                    <Modal 
+                                    checked={checked}
+                                    isOpen={isOpen}
+                                    /* conditionally render for button Restante,excursii,etc*/
+                                      messages = {messages}
+                                      currentUserId={currentUserId}
+                                    onClose={()=>setIsOpen(false)} />
+          
                                        <button className=" text-blue-800 text-xs font-medium mr-2 px-2.5 py-2 rounded
                                bg-transparent	 dark:text-red-400 border border-red-400 w-1/4">Burse</button>            
                                            <button className=" text-blue-800 text-xs font-medium mr-2 px-2.5 py-2 rounded
@@ -350,9 +371,10 @@ setGroupMembers} =  useContext(ChatContext)
                       className="relative ml-3 text-sm bg-gradient-to-r text-white w-60 max-h-20		break-words		 from-indigo-500 via-purple-500 to-pink-500 py-2 px-4 shadow rounded-xl"
                     >
                       <p className='break-words	w-80	'>{message.contents}</p>
-
                       <span className=' text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:text-red-100 flex
-                      p-4'>Posted  {timeagoFormat(message.createdAt)} </span>
+                      p-4'>Posted  {`${message.createdAt.toLocaleString("ro-RO").slice(0,10)} ${message.createdAt.toLocaleString("ro-RO",{  timeZone: "Europe/Bucharest",hour12:false
+                    }).slice(12,message.createdAt.toLocaleString().length-8)}`  } </span>
+                 
                     </div>
                   </div>
                 </div>
@@ -377,7 +399,7 @@ setGroupMembers} =  useContext(ChatContext)
                        
 
                         <span className=' text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:text-red-100 flex
-                      p-4'>Posted  {timeagoFormat(message.createdAt)} </span>
+                      p-4'>Posted  {`${message.createdAt.toLocaleString().slice(0,10)} ${message.createdAt.toLocaleString().slice(12,message.createdAt.toLocaleString().length-8)}`  } </span>
                                           </div>
                     </div>
 

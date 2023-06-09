@@ -1,7 +1,7 @@
 import { createContext,useState } from "react";
 import {useFormik} from 'formik'
 import axios from 'axios'
-import {Link,useNavigate} from 'react-router-dom'
+import {useNavigate} from 'react-router-dom'
 
 
 export let AuthContext = createContext();
@@ -31,6 +31,7 @@ export let AuthProvider = ({children}) => {
         // validare empty fields
         if(values.username=='' || values.email=='' || values.password==''){
           alert("Please fill in all the fields!")
+          setValidationsOk(false);
           navigate('/register')
           navigate(0)
         }
@@ -42,6 +43,7 @@ export let AuthProvider = ({children}) => {
             alert('Parola trebuie sa fie intre 4 si 15 caractere!')
             navigate('/register')
             navigate(0)
+            setValidationsOk(false)
           }
           else {
             setValidationsOk(true);
@@ -58,7 +60,7 @@ export let AuthProvider = ({children}) => {
             setValidationsOk(false)
             alert("Please upload an image!")
           }
-  
+      console.log(validationsOk)
           if(validationsOk)
           {
           let registeredUser = await axios.post('/api/user/create-user',dateForma)

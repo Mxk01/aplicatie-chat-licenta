@@ -4,7 +4,6 @@ import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { FaVideo} from "react-icons/fa";
 import { ChatContext } from '../../context/ChatContext'
-import { format as timeagoFormat } from 'timeago.js';
 
 const Messages = () => {
     let { 
@@ -45,9 +44,11 @@ const Messages = () => {
           <div className="grid grid-cols-12 gap-y-2">
             <span>{groupName}</span>
            {groupMessages.length!==0 &&  groupMessages.map( (message) =>  {
+            // console.log(message)
                 return( 
            <React.Fragment key={message._id}>  
            { 
+          
                   message.messageGroup == groupName && message.isDirectMessage == false ?    
          <div className="col-start-1 col-end-8 p-3 rounded-lg">
            
@@ -57,7 +58,8 @@ const Messages = () => {
                 >
                   <p className='break-words	w-80	'>{message.contents}</p>
                   <span className=' text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:text-red-100 flex
-                      p-4'>Posted  {timeagoFormat(message.createdAt)}  </span>
+                      p-4'>Posted  {`${message.createdAt.toLocaleString("ro-RO").slice(0,10)} ${message.createdAt.toLocaleString("ro-RO",{  timeZone: "Europe/Bucharest",hour12:false
+                    }).slice(12,message.createdAt.toLocaleString().length-6)} by ${message.messageSender.username}`  } </span>
                                  
                 </div>
               </div>
