@@ -46,7 +46,9 @@ export  let ChatProvider = memo(({children})=>{
     setSocket(io("https://nexotalk.onrender.com"));
     let getCurrentUserId = async() => {
     let sender = await axios.get('/api/user/get-current-user', config);
-    setCurrentUserId(sender.data.currentUser._id);
+    console.log(sender)
+    if(sender) setCurrentUserId(sender.data.currentUser._id);
+
     }
     getCurrentUserId()
    
