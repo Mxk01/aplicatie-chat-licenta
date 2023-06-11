@@ -7,6 +7,7 @@ let dotenv = require('dotenv');
 let jwt = require('jsonwebtoken');
 let Message = require('../models/Message')
 let multer = require('multer')
+let mongoose = require('mongoose')
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
@@ -68,7 +69,6 @@ router.post('/create-user',upload.single('profileAvatar'),async(req,res)=>{
      res.send(req.file)
   let user = new User(req.body);
     req.body.password  = await bcrypt.hash(req.body.password,10)
-    console.log(req.file);
     // req.protocol - http 
     //  req.get('host') - localhost
     // req.body.profileAvatar  = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
@@ -95,7 +95,7 @@ router.post('/create-user',upload.single('profileAvatar'),async(req,res)=>{
         }
     })
     await user.save();
-      res.status(200).json({message:user});
+     return  res.status(200).json({message:user});
   
 });
 
@@ -117,7 +117,7 @@ router.post('/login-user',(req,res)=>{
               }
              }
             else {
-                res.status(404).json({message:"Username doesn't exist!"})
+                 res.status(404).json({message:"Username doesn't exist!"})
             }
         }
     })    
@@ -173,8 +173,8 @@ router.get('/direct-messages/:senderId/:receiverId',isUserAuthenticated,async(re
 
 router.get('/get-group-messages/:group',async(req,res)=> {
   try {
-  let messages = await Message.find({isDirectMessage:false,messageGroup:req.params.group}).lean();
-
+  let messages = await Message.find({isDirectMessage:false,messageGroup:req.params.group}).populate('messageSender', 'username').lean()
+  
   res.status(200).json({messages});
   }
   catch(e){
@@ -210,17 +210,20 @@ router.post('/add-message/:senderId/:receiverId',async(req,res)=>{
 router.post('/add-group-message/:groupName',async(req,res)=>{
   try {
   let {groupName} = req.params;
-  let {isDirectMessage,contents} = req.body;
+  let {isDirectMessage,contents,senderId} = req.body;
   let message = new Message({
     isDirectMessage,
     contents,
-    messageGroup:groupName
+    messageGroup: groupName,
+    messageSender:senderId
   });
-  await message.save();
-  res.json({message});
+  
+  message = await message.save()
+  
+  res.status(200).json({ message });
   }
   catch(e){
-    res.json({error:e.message})
+    res.status(500).json({error:e.message})
   }
 
 });
@@ -262,6 +265,7 @@ router.delete('/delete-messages',async(req,res)=>{
    router.post('/create-group',async(req,res)=>{
       let group = new Group({groupName:req.body.groupName,groupMembers:req.body.groupMembers})
       group = await group.save();
+      
         res.json({group})
   })
 

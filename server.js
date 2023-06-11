@@ -1,13 +1,12 @@
 let express = require('express');
 let path = require('path')
 let dotenv = require('dotenv');
-
+let {connectToDatabase} = require('./utils')
 dotenv.config();
 let app = express(); 
 let routesUser = require('./routes/userRoutes')
 let routesAdmin = require('./routes/adminRoutes')
 let routesChat = require('./routes/chatRoutes')
-let mongoose = require('mongoose');
 let cors = require('cors');
 let http = require('http')
 let server = http.createServer(app);
@@ -15,22 +14,15 @@ const {Server} = require("socket.io");
 const io = new Server(server,{
     cors : {
         // origin is where we accept requests from
-        origin :'*',
+        origin :'http://localhost:3000',
         methods:['GET','POST'],
         credentials:true
     }
 });
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://nexo-talk.onrender.com');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  next();
-});
-
-
-mongoose.connect(process.env.MONGO_URI).then(()=>console.log('Connected to mongo'))
-.catch(e=>console.log(e))
+// mongoose.connect(process.env.MONGO_URI).then(()=>console.log('Connected to mongo'))
+// .catch(e=>console.log(e))
+connectToDatabase();
 app.use(cors());
 // means use the /uploads folder to serve static assets
 app.use('/uploads',express.static(path.join(__dirname,'uploads')));
@@ -88,7 +80,7 @@ io.on('connection',(socket)=>{
     let userReceiverID = getUtilizatorOnline(receiverName);
     if(userReceiverID!=undefined) {
     let {sId} = userReceiverID;
-    io.to(sId).emit('receive-message',message)
+    io.to(sId).emit('receive-message',{message,userReceiverID:sId})
     
     }
    })
