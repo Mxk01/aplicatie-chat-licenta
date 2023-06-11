@@ -44,13 +44,17 @@ export  let ChatProvider = memo(({children})=>{
   let [groupMessages,setGroupMessages] = useState([]);
   useEffect(() => {
     setSocket(io("http://localhost:5000"));
-
+    let getCurrentUserId = async() => {
+    let sender = await axios.get('/api/user/get-current-user', config);
+    setCurrentUserId(sender.data.currentUser._id);
+    }
+    getCurrentUserId()
+   
   }, []);
 
   let searchUsers = useCallback(async () => {
     const searchTerm = term.current.value.trim().toUpperCase();
     let users = currentUsers;
-    console.log(searchTerm)
     if (searchTerm) {
       const firstChar = searchTerm[0];
       
@@ -65,8 +69,11 @@ export  let ChatProvider = memo(({children})=>{
     }
   })
 
-const createGroup = useCallback(async () => {
-  let result = await axios.post('/api/user/create-group',{groupName,groupMembers});
+const createGroup = useCallback(async (groupAdmin) => {
+  let allMembers = [...groupMembers,groupAdmin]; // all members including admin
+  console.log(allMembers)
+  let result = await axios.post('/api/user/create-group',{groupName,groupMembers:allMembers});
+  console.log(result)
   setGroups([...groups,result.data.group])
 }, [groupName, groupMembers]);
 
@@ -126,7 +133,7 @@ const adauga_emoji = useCallback((emoji_selectat) => {
         receiverName: userToDM.username
       });
   
-            let directMessage = await axios.post(`/api/user/add-message/${sender.data.currentUser._id}/${userToDM._id}`,messageOptions);
+            let directMessage = await axios.post(`/api/user/add-message/${currentUserId}/${userToDM._id}`,messageOptions);
             setMessage('')
     
           }
@@ -135,11 +142,10 @@ const adauga_emoji = useCallback((emoji_selectat) => {
 
   const showMessages = useCallback(async () => {
     if (isDirectMessage && userToDM) {
-      let sender = await axios.get('/api/user/get-current-user', config);
-      setCurrentUserId(sender.data.currentUser._id);
+      
   
       // swap the ids
-      let directChatMessages = await axios.get(`/api/user/direct-messages/${sender.data.currentUser._id}/${userToDM._id}`, config);
+      let directChatMessages = await axios.get(`/api/user/direct-messages/${currentUserId}/${userToDM._id}`, config);
   
       setMessages(directChatMessages.data.messages);
     }
@@ -253,6 +259,7 @@ useEffect(() => {
   setGroupName,
   groupMembers,
   setGroupMembers,
+  config,
 
     }
 

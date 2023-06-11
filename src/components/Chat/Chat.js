@@ -2,6 +2,7 @@ import React, { useState,memo, useContext,useRef} from 'react'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { FaVideo,FaUserFriends} from "react-icons/fa";
+import axios from 'axios'
 import { ChatContext } from '../../context/ChatContext'
 const Modal = React.lazy(() => import('../Modal'));
 const Messages = React.lazy(() => import('../Messages/Messages'));
@@ -9,6 +10,7 @@ const Messages = React.lazy(() => import('../Messages/Messages'));
 
  function Chat() {
  let { 
+  config,
   createGroup,
   getCurrentGroup,
   getCurrentGroups,
@@ -120,8 +122,8 @@ setGroupMembers} =  useContext(ChatContext)
     data-tooltip-target="tooltip-jese" className="w-10 mr-2 h-10 rounded object-cover" src={c.profileAvatar} alt="Medium avatar"/>
     <button type="button" className="text-white ml-6 bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-900 font-medium rounded-full text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:focus:ring-blue-600"
     onClick={()=>{ 
+      // somehow add current user id aswell currentUserId  
       setGroupMembers([...groupMembers,c._id])
-      console.log(groupMembers)
     }}>Add</button>
     </div>
 
@@ -132,9 +134,10 @@ setGroupMembers} =  useContext(ChatContext)
 </div>
                     
                     <button type="submit" className="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                    onClick={(e)=>{
+                    onClick={async(e)=>{
                      e.preventDefault()
-                     createGroup()
+                     
+                     createGroup(currentUserId)
                      
                     }}>Save</button>
                
@@ -301,9 +304,19 @@ setGroupMembers} =  useContext(ChatContext)
           { groups!=[] && groups.map( g => ( 
        
             <button  onClick={()=>{
-              getCurrentGroup(g.groupName,g.groupMembers)
+             if(g.groupMembers.includes(currentUserId) ) { 
               setGroupSelected(true)
               setGroupName(g.groupName)
+
+              getCurrentGroup(g.groupName,g.groupMembers) 
+          
+            } 
+            else {
+         
+            alert("You aren't part of this group!")
+            navigate('/chat')
+            }
+             
             }}
               className="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2"
             >

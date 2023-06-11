@@ -44,6 +44,7 @@ const Messages = () => {
           <div className="grid grid-cols-12 gap-y-2">
             <span>{groupName}</span>
            {groupMessages.length!==0 &&  groupMessages.map( (message) =>  {
+                
             // console.log(message)
                 return( 
            <React.Fragment key={message._id}>  
