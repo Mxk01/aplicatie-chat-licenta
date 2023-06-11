@@ -14,7 +14,7 @@ const {Server} = require("socket.io");
 const io = new Server(server,{
     cors : {
         // origin is where we accept requests from
-        origin :'http://localhost:3000',
+        origin :'https://nexotalk.onrender.com',
         methods:['GET','POST'],
         credentials:true
     }
