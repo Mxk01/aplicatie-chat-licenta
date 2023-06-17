@@ -1,8 +1,7 @@
-import React, { useState,memo, useContext,useRef} from 'react'
+import React, { useState,memo, useContext, useCallback} from 'react'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { FaVideo,FaUserFriends} from "react-icons/fa";
-import axios from 'axios'
 import { ChatContext } from '../../context/ChatContext'
 const Modal = React.lazy(() => import('../Modal'));
 const Messages = React.lazy(() => import('../Messages/Messages'));
@@ -10,19 +9,13 @@ const Messages = React.lazy(() => import('../Messages/Messages'));
 
  function Chat() {
  let { 
-  config,
   createGroup,
   getCurrentGroup,
-  getCurrentGroups,
-  getCurrentUsers,
   adauga_emoji,
   term,
   sendMessage,
-  showMessages,
   /* state variables */
     messagesBottom,
-    currentEmoji,
-    setCurrentEmoji,
     notificationCount,
     setNotificationCount,
     emojiSelected,
@@ -73,13 +66,14 @@ setGroupMembers} =  useContext(ChatContext)
  let [groupSelected,setGroupSelected] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
- const handleOpenModal = () => {
+ const handleOpenModal =useCallback(() => {
    setIsOpen(true);
- };
+ });
 
- const handleCloseModal = () => {
+ const handleCloseModal = useCallback(() => {
    setIsOpen(false);
- };
+ });
+
  
 
 
@@ -257,7 +251,7 @@ setGroupMembers} =  useContext(ChatContext)
    
     connectedUsers && connectedUsers.map( cUser =>(
       
-      cUser.isConnected && cUser.username == user.username
+      cUser.isConnected && cUser.username === user.username
         ? 
        
         (<span key={cUser.username} className="top-7 left-7 absolute  w-3 h-3 bg-green-400 border-4s	  	 rounded-full"></span>) : '' 
@@ -353,11 +347,12 @@ setGroupMembers} =  useContext(ChatContext)
                               }}>Restante</button>   
                                     <Modal 
                                     checked={checked}
+                                    userToDM={userToDM ? userToDM : 'test'}
                                     isOpen={isOpen}
                                     /* conditionally render for button Restante,excursii,etc*/
                                       messages = {messages}
                                       currentUserId={currentUserId}
-                                    onClose={()=>setIsOpen(false)} />
+                                    onClose={()=>handleCloseModal()} />
           
                                        <button className=" text-blue-800 text-xs font-medium mr-2 px-2.5 py-2 rounded
                                bg-transparent	 dark:text-red-400 border border-red-400 w-1/4">Burse</button>            

@@ -43,12 +43,10 @@ export  let ChatProvider = memo(({children})=>{
   let config = { headers : {'Authorization' : `Bearer ${JSON.parse(localStorage.getItem('user')).data.token}` }}
   let [groupMessages,setGroupMessages] = useState([]);
   useEffect(() => {
-    setSocket(io("https://nexotalk.onrender.com"));
+    setSocket(io("http://localhost:5000"));
     let getCurrentUserId = async() => {
     let sender = await axios.get('/api/user/get-current-user', config);
-    console.log(sender)
-    if(sender) setCurrentUserId(sender.data.currentUser._id);
-
+    setCurrentUserId(sender.data.currentUser._id);
     }
     getCurrentUserId()
    
@@ -73,9 +71,7 @@ export  let ChatProvider = memo(({children})=>{
 
 const createGroup = useCallback(async (groupAdmin) => {
   let allMembers = [...groupMembers,groupAdmin]; // all members including admin
-  console.log(allMembers)
   let result = await axios.post('/api/user/create-group',{groupName,groupMembers:allMembers});
-  console.log(result)
   setGroups([...groups,result.data.group])
 }, [groupName, groupMembers]);
 
@@ -109,7 +105,6 @@ const adauga_emoji = useCallback((emoji_selectat) => {
    if(groupMessage!='' && sender.data.currentUser._id) {
     console.log(sender.data.currentUser._id)
     let gMessage = await axios.post(`/api/user/add-group-message/${groupName}/`,{contents:groupMessage,isDirectMessage:false,senderId:sender.data.currentUser._id})
-     console.log(gMessage)
     if(gMessage.status == 200) {
     getCurrentGroup(groupName)
     setGroupMessage('')
@@ -119,7 +114,6 @@ const adauga_emoji = useCallback((emoji_selectat) => {
 
  const getCurrentGroup = useCallback(async (groupName) => {
   let group = await axios.get(`/api/user/get-group-messages/${groupName}`);
-   console.log(group)
   setGroupMessages(group.data.messages);
 }, [groupName]);
 

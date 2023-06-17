@@ -1,4 +1,4 @@
-import React, { useContext} from 'react'
+import React, { useContext,memo,useCallback} from 'react'
  
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
@@ -33,6 +33,8 @@ const Messages = () => {
       setMessage,
  
       } =  useContext(ChatContext)
+
+     let changeGroupMsg = useCallback((e)=>setGroupMessage(e.target.value))
   return (
     <div className="flex flex-col flex-auto h-full p-6 scroll-smooth md:h-full" style={{backgroundColor:'#9c88ff'}}>
     <div
@@ -130,8 +132,7 @@ const Messages = () => {
               socket.emit('isTyping',{ user : user.username,message:` is typing ...  `})
             }}
 
-            onChange={(e)=>{ 
-              setGroupMessage(e.target.value); console.log(groupMessage)} }
+            onChange={e => changeGroupMsg(e)}  // add here   
            rows="1" className={`block mx-4 p-2.5 mr-2 w-full text-sm  bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500  ${checked ? 'dark:bg-gray-800 dark:text-white' : 'text-gray-900 bg-white' }  dark:border-gray-600 dark:placeholder-gray-400   dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Your message..."></textarea>
 
            
@@ -187,4 +188,4 @@ const Messages = () => {
   )
 }
 
-export default Messages
+export default memo(Messages)
