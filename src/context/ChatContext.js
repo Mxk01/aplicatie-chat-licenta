@@ -45,6 +45,7 @@ export  let ChatProvider = memo(({children})=>{
   useEffect(() => {
     setSocket(io("http://localhost:5000"));
     let getCurrentUserId = async() => {
+      // if some issue occurs add ? at the end of it 
     let sender = await axios.get('/api/user/get-current-user', config);
     setCurrentUserId(sender.data.currentUser._id);
     }
