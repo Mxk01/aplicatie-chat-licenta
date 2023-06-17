@@ -9,6 +9,8 @@ let routesAdmin = require('./routes/adminRoutes')
 let routesChat = require('./routes/chatRoutes')
 let cors = require('cors');
 let http = require('http')
+const host = process.env.HOST || '0.0.0.0';
+
 let server = http.createServer(app);
 const {Server} = require("socket.io");
 const io = new Server(server,{
@@ -20,10 +22,14 @@ const io = new Server(server,{
     }
 });
 
-// mongoose.connect(process.env.MONGO_URI).then(()=>console.log('Connected to mongo'))
-// .catch(e=>console.log(e))
+app.use(express.static(path.join(__dirname,'../frontend/build')))
+app.get('*',(req,res)=>{
+    res.sendFile(path.join(__dirname,'../frontend/build/index.html'))
+})
+ 
 connectToDatabase();
-app.use(cors());
+// if it breaks change later ..... 
+app.use(cors({origin:'*'}));
 // means use the /uploads folder to serve static assets
 app.use('/uploads',express.static(path.join(__dirname,'uploads')));
 app.use(express.json())
