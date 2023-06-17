@@ -9,7 +9,7 @@ function Login() {
   let [password,setPassword] = useState('')
   let loginUser = async() => {
 
-   let  loggedUser = await axios.post('api/user/login-user',{email,password})
+   let  loggedUser = await axios.post('https://nexotalk.onrender.com/api/user/login-user',{email,password})
    console.log(loggedUser)
    localStorage.setItem('user',JSON.stringify(loggedUser));
    navigate('/chat')

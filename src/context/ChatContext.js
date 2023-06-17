@@ -43,10 +43,10 @@ export  let ChatProvider = memo(({children})=>{
   let config = { headers : {'Authorization' : `Bearer ${JSON.parse(localStorage.getItem('user')).data.token}` }}
   let [groupMessages,setGroupMessages] = useState([]);
   useEffect(() => {
-    setSocket(io("https://nexotalk.onrender.com"));
+    setSocket(io("https://nexotalk.onrender.com/"));
     let getCurrentUserId = async() => {
       // if some issue occurs add ? at the end of it 
-    let sender = await axios.get('/api/user/get-current-user', config);
+    let sender = await axios.get('https://nexotalk.onrender.com/api/user/get-current-user', config);
     setCurrentUserId(sender?.data.currentUser._id);
     }
     getCurrentUserId()
@@ -72,19 +72,19 @@ export  let ChatProvider = memo(({children})=>{
 
 const createGroup = useCallback(async (groupAdmin) => {
   let allMembers = [...groupMembers,groupAdmin]; // all members including admin
-  let result = await axios.post('/api/user/create-group',{groupName,groupMembers:allMembers});
+  let result = await axios.post('https://nexotalk.onrender.com/api/user/create-group',{groupName,groupMembers:allMembers});
   setGroups([...groups,result.data.group])
 }, [groupName, groupMembers]);
 
 
 
 const getCurrentUsers = useCallback(async () => {
-  let users = await axios.get('/api/user/users-list', config);
+  let users = await axios.get('https://nexotalk.onrender.com/api/user/users-list', config);
   setCurrentUsers(users.data.message)
 }, []);
 
 const getCurrentGroups = useCallback(async () => {
-  let groups = await axios.get('/api/user/get-groups')
+  let groups = await axios.get('https://nexotalk.onrender.com/api/user/get-groups')
   setGroups(groups.data);
 }, []);
 
@@ -101,11 +101,11 @@ const adauga_emoji = useCallback((emoji_selectat) => {
 
  const sendGroupMessage = useCallback(async (e,groupName)=>{
   e.preventDefault();
-  let sender = await axios.get('/api/user/get-current-user', config);
+  let sender = await axios.get('https://nexotalk.onrender.com/api/user/get-current-user', config);
 
    if(groupMessage!='' && sender.data.currentUser._id) {
     console.log(sender.data.currentUser._id)
-    let gMessage = await axios.post(`/api/user/add-group-message/${groupName}/`,{contents:groupMessage,isDirectMessage:false,senderId:sender.data.currentUser._id})
+    let gMessage = await axios.post(`https://nexotalk.onrender.com/api/user/add-group-message/${groupName}/`,{contents:groupMessage,isDirectMessage:false,senderId:sender.data.currentUser._id})
     if(gMessage.status == 200) {
     getCurrentGroup(groupName)
     setGroupMessage('')
@@ -114,13 +114,13 @@ const adauga_emoji = useCallback((emoji_selectat) => {
  })
 
  const getCurrentGroup = useCallback(async (groupName) => {
-  let group = await axios.get(`/api/user/get-group-messages/${groupName}`);
+  let group = await axios.get(`https://nexotalk.onrender.com/api/user/get-group-messages/${groupName}`);
   setGroupMessages(group.data.messages);
 }, [groupName]);
 
   const sendMessage = useCallback(async (e) => {
     e.preventDefault();
-    let sender = await axios.get('/api/user/get-current-user', config);
+    let sender = await axios.get('https://nexotalk.onrender.com/api/user/get-current-user', config);
   
     if (userToDM && isDirectMessage && message != '') {
       let messageOptions = {isDirectMessage:true, contents:message, photoPath:user.data.profileAvatar};
@@ -130,7 +130,7 @@ const adauga_emoji = useCallback((emoji_selectat) => {
         receiverName: userToDM.username
       });
   
-            let directMessage = await axios.post(`/api/user/add-message/${currentUserId}/${userToDM._id}`,messageOptions);
+            let directMessage = await axios.post(`https://nexotalk.onrender.com/api/user/add-message/${currentUserId}/${userToDM._id}`,messageOptions);
             setMessage('')
     
           }
@@ -142,7 +142,7 @@ const adauga_emoji = useCallback((emoji_selectat) => {
       
   
       // swap the ids
-      let directChatMessages = await axios.get(`/api/user/direct-messages/${currentUserId}/${userToDM._id}`, config);
+      let directChatMessages = await axios.get(`https://nexotalk.onrender.com/api/user/direct-messages/${currentUserId}/${userToDM._id}`, config);
   
       setMessages(directChatMessages.data.messages);
     }
