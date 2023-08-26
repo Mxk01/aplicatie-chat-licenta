@@ -64,36 +64,37 @@ let isUserAuthenticated = async(req,res,next) =>{
  }
 
 
-// upload.single('profileAvatar')
 router.post('/create-user',upload.single('profileAvatar'),async(req,res)=>{
-     res.send(req.file)
   let user = new User(req.body);
     req.body.password  = await bcrypt.hash(req.body.password,10)
-    // req.protocol - http 
-    //  req.get('host') - localhost
-    // req.body.profileAvatar  = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    
-    // resize image and get its url
+    try {
     const resizedImage = cloudinary.url(req.file.filename,{
       transformation:[
         {width:150,height:150,crop:'fill',crop:'fill'}
       ]
+       
     })
     
     req.body.profileAvatar = resizedImage;
-    //   expira in  4 ore de la data curenta 
-   let token =  jwt.sign(req.body,process.env.JWT_SECRET,{expiresIn:Date.now()+14400000});
+    user.profileAvatar = req.body.profileAvatar;
+  }
+  catch(e){
+    res.status(200).json({error:e.message});
+  }
+  
+
+  let token =  jwt.sign(req.body,process.env.JWT_SECRET,{expiresIn:Date.now()+14400000});
   user.password = req.body.password;
-  user.profileAvatar = req.body.profileAvatar;
   user.token = token;
     User.exists({email:req.body.email},(err,doc)=>{
-        if(err) { console.log(err.message); }
+        if(err) { return res.status(500).json({error:err.message}); }
         else { 
             if(doc){
                return  res.status(409).json({message:"Username already exists!"})
             }
         }
     })
+  
     await user.save();
      return  res.status(200).json({message:user});
   
@@ -240,27 +241,6 @@ router.delete('/delete-messages',async(req,res)=>{
     let group = await Group.find({});
     res.json(group);
   })
-
-  //  router.get('/get-group',async(req,res)=> { 
-  //   try {
-    
-  //   let {groupName,groupMembers} = req.body;
-  //   const groupMessages = await Message.find({ 'messageSender': 
-  //   { $in: groupMembers },
-  //   messageGroup:groupName,
-  //   isDirectMessage:false });
-  //   if(groupMessages!=[]) {
-  //   res.status(200).json({messages:groupMessages})
-  //   }
-  //   else {
-  //     res.status(404).json({message:"There is no such group!"})
-  //   }
-  
-  //   }
-  //   catch(e){
-  //     res.status(404).json({error:"No messages in this group"})
-  //   }
-  //  })
 
    router.post('/create-group',async(req,res)=>{
       let group = new Group({groupName:req.body.groupName,groupMembers:req.body.groupMembers})

@@ -16,11 +16,12 @@ const {Server} = require("socket.io");
 const io = new Server(server,{
     cors : {
         // origin is where we accept requests from
-        origin :'https://nexo-talk.onrender.com',
+        origin :'http://localhost:3000',
         methods:['GET','POST'],
         credentials:true
     }
 });
+
 
  
 connectToDatabase();
