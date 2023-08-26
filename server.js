@@ -10,37 +10,27 @@ let routesChat = require('./routes/chatRoutes')
 let cors = require('cors');
 let http = require('http')
 const host = process.env.HOST || '0.0.0.0';
-
 let server = http.createServer(app);
 const {Server} = require("socket.io");
 const io = new Server(server,{
     cors : {
-        // origin is where we accept requests from
         origin :'*',
         methods:['GET','POST'],
         credentials:true
     }
 });
 
-
- 
 connectToDatabase();
-// if it breaks change later ..... 
 app.use(cors({origin:'*'}));
-// means use the /uploads folder to serve static assets
+
 app.use('/uploads',express.static(path.join(__dirname,'uploads')));
 app.use(express.json())
 app.use('/api/chat',routesChat)
 app.use('/api/user',routesUser)
 app.use('/api/admin',routesAdmin)
 
-// Array-ul utilizatoriOnline va avea urmatoarea structura 
-//  [  { username : 'addasasd' , socketId : 'asdaq21e21wdqad' } , {username:'asdsad',socketId:'aw322r'}]
 let utilizatoriOnline = [];
-
-
-
- const adaugaUtilizator = (username,sId) => {
+const adaugaUtilizator = (username,sId) => {
  !utilizatoriOnline.some(uOn => uOn.username === username ) && utilizatoriOnline.push({username,sId,isConnected:true})
 }
 const stergeUtilizator = (sId) => {
@@ -50,7 +40,6 @@ const stergeUtilizator = (sId) => {
 const  getUtilizatorOnline = (username) => {
       return utilizatoriOnline.find(user => user.username == username);
 }
-
 
 io.on('connection',(socket)=>{
 
@@ -62,10 +51,6 @@ io.on('connection',(socket)=>{
 
     })
 
-   
-
-    
-
     socket.on('friend-request',({receiverName,senderName})=>{
       let userReceiverID = getUtilizatorOnline(receiverName);
       if(userReceiverID!=undefined) {
@@ -73,9 +58,6 @@ io.on('connection',(socket)=>{
       io.to(sId).emit('receive-friend-request',`${senderName} v-a trimis o cerere de prietenie!`)
       
       }
-
-
-
      })
 
 
@@ -95,9 +77,6 @@ io.on('connection',(socket)=>{
    
 
    socket.on('disconnect',()=>{
-   
-    // socket.emit('utilizator-online',utilizatoriOnline)
-
    })
 })
 
