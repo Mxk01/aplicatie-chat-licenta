@@ -5,8 +5,6 @@ import { FaVideo,FaUserFriends} from "react-icons/fa";
 import { ChatContext } from '../../context/ChatContext'
 const Modal = React.lazy(() => import('../Modal'));
 const Messages = React.lazy(() => import('../Messages/Messages'));
-
-
  function Chat() {
  let { 
   createGroup,
@@ -267,7 +265,6 @@ setGroupMembers} =  useContext(ChatContext)
           
   
       }
-    {/* { !isOnline ? <span className="top-7 left-7 absolute  w-3 h-3 bg-red-400 border-4s		 rounded-full"></span>  : "" } */}
 </>
 </div>
               <div className="ml-2 text-sm font-semibold">{user.username}</div>
