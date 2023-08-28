@@ -11,13 +11,14 @@ let cors = require('cors');
 let http = require('http')
 const host = process.env.HOST || '0.0.0.0';
 let server = http.createServer(app);
-const socketio = require("socket.io");
-const io = socketio(server, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST", "OPTIONS"]
+const {Server} = require("socket.io");
+const io = new Server(server,{
+    cors : {
+        origin :'*',
+        methods:['GET','POST'],
+        credentials:true
     }
-  });
+});
 
 connectToDatabase();
 app.use(cors({origin:'*'}));
