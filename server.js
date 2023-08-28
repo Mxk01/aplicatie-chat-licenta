@@ -22,7 +22,12 @@ const io = new Server(server,{
 
 connectToDatabase();
 app.use(cors({origin:'*'}));
-
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+app.get('/', (req, res) => {
+//    res.send(__dirname)
+const frontendIndexPath = path.join(__dirname, '../frontend/build/index.html');
+res.sendFile(frontendIndexPath);
+});
 app.use('/uploads',express.static(path.join(__dirname,'uploads')));
 app.use(express.json())
 app.use('/api/chat',routesChat)
