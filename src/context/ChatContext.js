@@ -39,7 +39,7 @@ export  let ChatProvider = memo(({children})=>{
   let config = { headers : {'Authorization' : `Bearer ${JSON.parse(localStorage.getItem('user')).data.token}` }}
   let [groupMessages,setGroupMessages] = useState([]);
   useEffect(() => {
-    setSocket(io("http://localhost:5000"));
+    setSocket(io("https://nexotalk.onrender.com"));
     let getCurrentUserId = async() => {
     let sender = await axios.get('https://nexotalk.onrender.com/api/user/get-current-user', config);
     setCurrentUserId(sender?.data.currentUser._id);
