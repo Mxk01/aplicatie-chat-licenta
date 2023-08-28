@@ -5,10 +5,6 @@ import { useCallback,useState,createContext,useEffect,useRef,memo } from "react"
 import { useNavigate } from "react-router";
 
 export let ChatContext = createContext();
- 
-
-
-
 
 export  let ChatProvider = memo(({children})=>{
   let term =  useRef(null) 
