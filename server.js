@@ -11,14 +11,13 @@ let cors = require('cors');
 let http = require('http')
 const host = process.env.HOST || '0.0.0.0';
 let server = http.createServer(app);
-const {Server} = require("socket.io");
-const io = new Server(server,{
-    cors : {
-        origin :'*',
-        methods:['GET','POST'],
-        credentials:true
+const socketio = require("socket.io");
+const io = socketio(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST", "OPTIONS"]
     }
-});
+  });
 
 connectToDatabase();
 app.use(cors({origin:'*'}));
@@ -52,44 +51,44 @@ server.listen(process.env.PORT || 5000,()=>{
     console.log('Primeste request-uri la portul 5000')
 
 
-    io.on('connection',(socket)=>{
+io.on('connection',(socket)=>{
 
-        socket.on('utilizator-nou-online',(username)=>{
-        
-           adaugaUtilizator(username,socket.id);
-           io.emit('utilizator-online',utilizatoriOnline)
-      
+    socket.on('utilizator-nou-online',(username)=>{
     
-        })
-    
-        socket.on('friend-request',({receiverName,senderName})=>{
-          let userReceiverID = getUtilizatorOnline(receiverName);
-          if(userReceiverID!=undefined) {
-          let {sId} = userReceiverID;
-          io.to(sId).emit('receive-friend-request',`${senderName} v-a trimis o cerere de prietenie!`)
-          
-          }
-         })
-    
-    
-       socket.on('send-message',({message,receiverName})=>{
-        let userReceiverID = getUtilizatorOnline(receiverName);
-        if(userReceiverID!=undefined) {
-        let {sId} = userReceiverID;
-        io.to(sId).emit('receive-message',{message,userReceiverID:sId})
-        
-        }
-       })
-    
-       socket.on('logout',()=>{
-        utilizatoriOnline = stergeUtilizator(socket.id);
-        io.emit('utilizator-online',utilizatoriOnline)
-       })
-       
-    
-       socket.on('disconnect',()=>{
-       })
+       adaugaUtilizator(username,socket.id);
+       io.emit('utilizator-online',utilizatoriOnline)
+  
+
     })
+
+    socket.on('friend-request',({receiverName,senderName})=>{
+      let userReceiverID = getUtilizatorOnline(receiverName);
+      if(userReceiverID!=undefined) {
+      let {sId} = userReceiverID;
+      io.to(sId).emit('receive-friend-request',`${senderName} v-a trimis o cerere de prietenie!`)
+      
+      }
+     })
+
+
+   socket.on('send-message',({message,receiverName})=>{
+    let userReceiverID = getUtilizatorOnline(receiverName);
+    if(userReceiverID!=undefined) {
+    let {sId} = userReceiverID;
+    io.to(sId).emit('receive-message',{message,userReceiverID:sId})
     
+    }
+   })
+
+   socket.on('logout',()=>{
+    utilizatoriOnline = stergeUtilizator(socket.id);
+    io.emit('utilizator-online',utilizatoriOnline)
+   })
+   
+
+   socket.on('disconnect',()=>{
+   })
+})
+
 
 })
