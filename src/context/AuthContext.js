@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
                 }
                  console.log(formData)
          
-                    const registeredUser = await axios.post('/api/user/create-user', formData);
+                    const registeredUser = await axios.post('https://nexotalk.onrender.com/api/user/create-user', formData);
                     console.log(registeredUser);
                     navigate('/');
                 
