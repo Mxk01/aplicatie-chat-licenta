@@ -46,43 +46,50 @@ const  getUtilizatorOnline = (username) => {
       return utilizatoriOnline.find(user => user.username == username);
 }
 
-io.on('connection',(socket)=>{
-
-    socket.on('utilizator-nou-online',(username)=>{
+server.listen(process.env.PORT || 5000,()=>{
     
-       adaugaUtilizator(username,socket.id);
-       io.emit('utilizator-online',utilizatoriOnline)
-  
+    
+    console.log('Primeste request-uri la portul 5000')
 
-    })
 
-    socket.on('friend-request',({receiverName,senderName})=>{
-      let userReceiverID = getUtilizatorOnline(receiverName);
-      if(userReceiverID!=undefined) {
-      let {sId} = userReceiverID;
-      io.to(sId).emit('receive-friend-request',`${senderName} v-a trimis o cerere de prietenie!`)
+    io.on('connection',(socket)=>{
+
+        socket.on('utilizator-nou-online',(username)=>{
+        
+           adaugaUtilizator(username,socket.id);
+           io.emit('utilizator-online',utilizatoriOnline)
       
-      }
-     })
-
-
-   socket.on('send-message',({message,receiverName})=>{
-    let userReceiverID = getUtilizatorOnline(receiverName);
-    if(userReceiverID!=undefined) {
-    let {sId} = userReceiverID;
-    io.to(sId).emit('receive-message',{message,userReceiverID:sId})
     
-    }
-   })
+        })
+    
+        socket.on('friend-request',({receiverName,senderName})=>{
+          let userReceiverID = getUtilizatorOnline(receiverName);
+          if(userReceiverID!=undefined) {
+          let {sId} = userReceiverID;
+          io.to(sId).emit('receive-friend-request',`${senderName} v-a trimis o cerere de prietenie!`)
+          
+          }
+         })
+    
+    
+       socket.on('send-message',({message,receiverName})=>{
+        let userReceiverID = getUtilizatorOnline(receiverName);
+        if(userReceiverID!=undefined) {
+        let {sId} = userReceiverID;
+        io.to(sId).emit('receive-message',{message,userReceiverID:sId})
+        
+        }
+       })
+    
+       socket.on('logout',()=>{
+        utilizatoriOnline = stergeUtilizator(socket.id);
+        io.emit('utilizator-online',utilizatoriOnline)
+       })
+       
+    
+       socket.on('disconnect',()=>{
+       })
+    })
+    
 
-   socket.on('logout',()=>{
-    utilizatoriOnline = stergeUtilizator(socket.id);
-    io.emit('utilizator-online',utilizatoriOnline)
-   })
-   
-
-   socket.on('disconnect',()=>{
-   })
 })
-
-server.listen(process.env.PORT || 5000,()=>{console.log('Primeste request-uri la portul 5000')})
