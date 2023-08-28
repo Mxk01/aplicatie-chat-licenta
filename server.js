@@ -46,10 +46,6 @@ const  getUtilizatorOnline = (username) => {
       return utilizatoriOnline.find(user => user.username == username);
 }
 
-server.listen(process.env.PORT || 5000,()=>{
-    
-    
-    console.log('Primeste request-uri la portul 5000')
 
 
 io.on('connection',(socket)=>{
@@ -90,6 +86,15 @@ io.on('connection',(socket)=>{
    socket.on('disconnect',()=>{
    })
 })
+
+
+
+server.listen(process.env.PORT || 4000,()=>{
+    
+    
+    console.log('Primeste request-uri la portul 4000')
+
+
 
 
 })
