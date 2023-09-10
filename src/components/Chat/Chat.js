@@ -1,6 +1,7 @@
 import React, { useState,memo, useContext, useCallback} from 'react'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
+import {Link} from 'react-router-dom'
 import { FaVideo,FaUserFriends} from "react-icons/fa";
 import { ChatContext } from '../../context/ChatContext'
 const Modal = React.lazy(() => import('../Modal'));
@@ -435,8 +436,7 @@ setGroupMembers} =  useContext(ChatContext)
           >
  
             <div className='flex'>
-            <FaVideo className='ml-2 mr-2 cursor-pointer'  size="1.3em" color="#a29bfe"/>
-            
+            <Link to="/video-call"><FaVideo className='ml-2 mr-2 cursor-pointer'  size="1.3em" color="#a29bfe"/></Link>            
       
  
            
